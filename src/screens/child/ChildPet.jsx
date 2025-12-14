@@ -1,11 +1,12 @@
 import { Text, View } from 'react-native'
 
-const Details = () => {
+const ChildPet = () => {
   return (
     <View>
-      <Text>Details</Text>
+      <Text>ChildPet</Text>
     </View>
   )
 }
 
-export default Details
+export default ChildPet
+

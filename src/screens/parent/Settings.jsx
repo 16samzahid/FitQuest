@@ -1,11 +1,11 @@
 import { Text, View } from 'react-native'
 
-const Login = () => {
+const Settings = () => {
   return (
     <View>
-      <Text>Login</Text>
+      <Text>Settings</Text>
     </View>
   )
 }
 
-export default Login
+export default Settings

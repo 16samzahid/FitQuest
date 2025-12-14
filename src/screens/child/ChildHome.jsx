@@ -1,11 +1,11 @@
 import { Text, View } from 'react-native'
 
-const Login = () => {
+const ChildHome = () => {
   return (
     <View>
-      <Text>Login</Text>
+      <Text>ChildHome</Text>
     </View>
   )
 }
 
-export default Login
+export default ChildHome
