@@ -1,19 +1,30 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import Login from "../screens/Login";
-import Welcome from "../screens/Welcome";
+import { useMode } from "../context/ModeContext";
+
+import BirthYearScreen from "../screens/BirthYearConfirm";
+import ChildNavigator from "./ChildNavigator";
 import ParentNavigator from "./ParentNavigator";
 
 const Stack = createNativeStackNavigator();
 
 export default function Navigator() {
-  const loggedin = true; // Replace with actual authentication logic
-  return loggedin ? (
-    <ParentNavigator />
-  ) : (
-    <Stack.Navigator initialRouteName="Welcome">
-      <Stack.Screen name="Welcome" component={Welcome} />
-      <Stack.Screen name="Login" component={Login} />
+  const { mode } = useMode();
+
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {mode === "child" ? (
+        <>
+          <Stack.Screen name="ChildTabs" component={ChildNavigator} />
+
+          <Stack.Screen
+            name="BirthYear"
+            component={BirthYearScreen}
+            options={{ presentation: "modal" }}
+          />
+        </>
+      ) : (
+        <Stack.Screen name="ParentTabs" component={ParentNavigator} />
+      )}
     </Stack.Navigator>
   );
-  // <ParentNavigator />
 }
