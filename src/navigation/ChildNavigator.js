@@ -12,6 +12,7 @@ export default function ChildNavigator() {
     <Tab.Navigator
       initialRouteName="Home"
       screenOptions={({ route }) => ({
+        headerShown: false,
         tabBarIcon: ({ color, size }) => {
           const icons = {
             Home: "home",
@@ -22,21 +23,25 @@ export default function ChildNavigator() {
             <Ionicons name={icons[route.name]} color={color} size={size} />
           );
         },
-        headerRight: () => (
-          <Ionicons
-            name="swap-horizontal"
-            size={22}
-            className="text-gray-700"
-            style={{ marginRight: 15 }}
-            onPress={() => {
-              setMode("parent");
-            }}
-          />
-        ),
+        tabBarActiveTintColor: "#ffffff",
+        tabBarInactiveTintColor: "#b8b9ba",
+        tabBarLabelPosition: "below-icon",
       })}
     >
-      <Tab.Screen name="Home" component={ChildHome} />
-      <Tab.Screen name="Pet" component={ChildPet} />
+      <Tab.Screen
+        options={{
+          tabBarStyle: { backgroundColor: "#393EA6" },
+        }}
+        name="Home"
+        component={ChildHome}
+      />
+      <Tab.Screen
+        options={{
+          tabBarStyle: { backgroundColor: "#D02C2C" },
+        }}
+        name="Pet"
+        component={ChildPet}
+      />
     </Tab.Navigator>
   );
 }
