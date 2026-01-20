@@ -16,7 +16,7 @@ const ChildPet = () => {
       {/* Level */}
       <LevelCoinSection level={10} progress={45} coins={120} />
 
-      {/* Tasks / Cards */}
+      {/* Colours and Accessories */}
     </SafeAreaView>
   );
 };

@@ -1,42 +1,29 @@
-import { Text, View } from "react-native";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { View } from "react-native";
+import StatBar from "./StatBar";
 
 export default function PetStatsCard({
   health = 15,
   hunger = 82,
   happiness = 60,
 }) {
+  const cookie = <FontAwesome5 name="cookie-bite" size={28} color="#80420B" />;
+  const heart = <AntDesign name="heart" size={28} color="#FD4545" />;
+  const smile = (
+    <MaterialCommunityIcons name="emoticon-happy" size={28} color="#E69420" />
+  );
   return (
-    <View className="flex-row mt-5 shadow-md bg-white rounded-3xl p-4">
-      {/* Progress bars */}
-      <View className="flex-1 ml-4 bg-#EBEBEB">
-        <View className="h-6 bg-gray-300 rounded-full overflow-hidden">
-          <View
-            className="h-full bg-indigo-700"
-            style={{ width: `${health}%` }}
-          />
-        </View>
-        <Text className="text-xs mt-1 text-indigo-700">Health</Text>
-      </View>
+    <View className="mt-5 shadow-md bg-white rounded-3xl p-4">
+      {/* Health Bar */}
+      <StatBar label="Health" color="red" value={health} icon={heart} />
 
-      <View className="flex-1 ml-4 bg-#EBEBEB">
-        <View className="h-6 bg-gray-300 rounded-full overflow-hidden">
-          <View
-            className="h-full bg-indigo-700"
-            style={{ width: `${hunger}%` }}
-          />
-        </View>
-        <Text className="text-xs mt-1 text-indigo-700">Hunger</Text>
-      </View>
+      {/* Hunger Bar */}
+      <StatBar label="Hunger" color="green" value={hunger} icon={cookie} />
 
-      <View className="flex-1 ml-4 bg-#EBEBEB">
-        <View className="h-6 bg-gray-300 rounded-full overflow-hidden">
-          <View
-            className="h-full bg-indigo-700"
-            style={{ width: `${happiness}%` }}
-          />
-        </View>
-        <Text className="text-xs mt-1 text-indigo-700">Happiness</Text>
-      </View>
+      {/* Happiness Bar */}
+      <StatBar label="Happiness" color="blue" value={happiness} icon={smile} />
     </View>
   );
 }
