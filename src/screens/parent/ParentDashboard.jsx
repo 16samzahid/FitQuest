@@ -1,12 +1,15 @@
-import React from 'react'
-import { Text, View } from 'react-native'
+import React from "react";
+import { Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const ParentDashboard = () => {
   return (
-    <View>
-      <Text>Parent Dashboard</Text>
-    </View>
-  )
-}
+    <SafeAreaView className="flex-1">
+      <View className="flex-1 px-4">
+        <Text>Parent Dashboard</Text>
+      </View>
+    </SafeAreaView>
+  );
+};
 
-export default ParentDashboard
+export default ParentDashboard;

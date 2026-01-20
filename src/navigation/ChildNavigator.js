@@ -19,9 +19,7 @@ export default function ChildNavigator() {
             Pet: "paw",
           };
 
-          return (
-            <Ionicons name={icons[route.name]} color={color} size={size} />
-          );
+          return <Ionicons name={icons[route.name]} color={color} size={32} />;
         },
         tabBarActiveTintColor: "#ffffff",
         tabBarInactiveTintColor: "#b8b9ba",

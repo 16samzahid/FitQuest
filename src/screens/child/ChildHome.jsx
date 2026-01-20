@@ -1,10 +1,11 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Avatar from "../../components/Avatar";
-import LevelCoinSection from "../../components/LevelCoinSection";
+import PetStatsCard from "../../components/PetStatsCard";
 import PinModal from "../../components/PinModal";
-import TaskCard from "../../components/TaskCard";
+import Tasks from "../../components/Tasks";
 import { useMode } from "../../context/ModeContext";
 
 export default function ChildHome() {
@@ -12,9 +13,10 @@ export default function ChildHome() {
   const childName = "Sam";
   const [showPin, setShowPin] = useState(false);
   return (
-    <View className="flex-1 px-4 pt-4">
+    <SafeAreaView className="flex-1 px-4 pt-4">
       {/* Switch button */}
       <Pressable
+        className="mt-4"
         onPress={() => setShowPin(true)}
         style={{
           position: "absolute",
@@ -25,7 +27,7 @@ export default function ChildHome() {
           elevation: 10,
         }}
       >
-        <Ionicons name="swap-horizontal" size={26} color="#374151" />
+        <Ionicons name="swap-horizontal" size={40} color="#374151" />
       </Pressable>
 
       {/* PIN overlay */}
@@ -42,36 +44,18 @@ export default function ChildHome() {
         Welcome {childName}!
       </Text>
       {/* Avatar */}
-      <View className="flex-row justify-center mt-4 justify-evenly">
+      <View className="flex-row justify-center justify-evenly">
         <Avatar />
-        {/* Stats */}
-        {/*insert stats card here with health, happiness, hunger*/}
       </View>
 
       {/*Summary Card */}
       {/* Insert a card with summary for example 1/3 tasks done */}
 
       {/* Level */}
-      <LevelCoinSection />
+      <PetStatsCard health={75} hunger={50} happiness={90} />
 
       {/* Tasks / Cards */}
-      <Text className="text-indigo-700 font-semibold mt-2 text-lg text-center">
-        Tasks
-      </Text>
-      <ScrollView className="mt-6 space-y-4 mb-4">
-        <TaskCard />
-        <TaskCard />
-        <TaskCard />
-        <TaskCard />
-        <TaskCard />
-        <TaskCard />
-        <TaskCard />
-        <TaskCard />
-        <TaskCard />
-        <TaskCard />
-        <TaskCard />
-        <TaskCard />
-      </ScrollView>
-    </View>
+      <Tasks />
+    </SafeAreaView>
   );
 }

@@ -73,13 +73,21 @@ export default function PinModal({ visible, onClose, onSuccess }) {
       >
         <View
           style={{
-            width: "50%",
+            width: "85%",
+            maxWidth: 380,
             backgroundColor: "white",
-            padding: 20,
-            borderRadius: 14,
+            padding: 28,
+            borderRadius: 20,
           }}
         >
-          <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 14 }}>
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "700",
+              marginBottom: 24,
+              textAlign: "center",
+            }}
+          >
             Enter Parent PIN
           </Text>
 
@@ -88,7 +96,8 @@ export default function PinModal({ visible, onClose, onSuccess }) {
             style={{
               flexDirection: "row",
               justifyContent: "center",
-              marginBottom: 10,
+              marginBottom: 16,
+              gap: 16,
             }}
           >
             {pin.map((digit, index) => (
@@ -102,20 +111,31 @@ export default function PinModal({ visible, onClose, onSuccess }) {
                 maxLength={1}
                 secureTextEntry
                 style={{
-                  width: 50,
-                  height: 55,
-                  borderWidth: 1,
+                  width: 60,
+                  height: 65,
+                  borderWidth: 2,
                   borderColor: "#d1d5db",
-                  borderRadius: 10,
-                  fontSize: 24,
+                  borderRadius: 12,
+                  fontSize: 28,
                   textAlign: "center",
+                  fontWeight: "600",
                 }}
               />
             ))}
           </View>
 
           {!!error && (
-            <Text style={{ color: "#dc2626", marginBottom: 8 }}>{error}</Text>
+            <Text
+              style={{
+                color: "#dc2626",
+                marginBottom: 12,
+                textAlign: "center",
+                fontSize: 14,
+                fontWeight: "500",
+              }}
+            >
+              {error}
+            </Text>
           )}
 
           {/* Buttons */}
@@ -123,15 +143,49 @@ export default function PinModal({ visible, onClose, onSuccess }) {
             style={{
               flexDirection: "row",
               justifyContent: "space-between",
-              marginTop: 18,
+              marginTop: 24,
+              gap: 12,
             }}
           >
-            <Pressable onPress={onClose} style={{ padding: 10 }}>
-              <Text style={{ color: "#6b7280", fontSize: 16 }}>Cancel</Text>
+            <Pressable
+              onPress={onClose}
+              style={{
+                flex: 1,
+                paddingVertical: 16,
+                paddingHorizontal: 20,
+                borderRadius: 12,
+                backgroundColor: "#f3f4f6",
+                alignItems: "center",
+                borderWidth: 1,
+                borderColor: "#e5e7eb",
+              }}
+            >
+              <Text
+                style={{ color: "#6b7280", fontSize: 17, fontWeight: "600" }}
+              >
+                Cancel
+              </Text>
             </Pressable>
 
-            <Pressable onPress={handleConfirm} style={{ padding: 10 }}>
-              <Text style={{ color: "#2563eb", fontWeight: "700", fontSize: 16 }}>
+            <Pressable
+              onPress={handleConfirm}
+              style={{
+                flex: 1,
+                paddingVertical: 16,
+                paddingHorizontal: 20,
+                borderRadius: 12,
+                backgroundColor: "#2563eb",
+                alignItems: "center",
+                shadowColor: "#2563eb",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.3,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+            >
+              <Text
+                style={{ color: "#ffffff", fontWeight: "700", fontSize: 17 }}
+              >
                 Confirm
               </Text>
             </Pressable>
