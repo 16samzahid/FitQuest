@@ -8,18 +8,25 @@ const COLOR_MAP = {
 
 export default function StatBar({ label, color, value, icon }) {
   return (
-    <View className="mb-4 flex-row items-start">
-      <View className="mr-3">{icon}</View>
-      <View className="flex-1">
-        <Text className="text-[16px] text-indigo-700 mb-1 font-bold">
+    <View className="mb-4 w-full">
+      {/* Icon + Label */}
+      <View className="flex-row items-center mb-2">
+        <View className="mr-2 shrink-0">{icon}</View>
+
+        <Text
+          className="text-[15px] text-indigo-700 font-semibold"
+          numberOfLines={1}
+        >
           {label}
         </Text>
-        <View className="h-6 bg-gray-300 rounded-full overflow-hidden">
-          <View
-            className={`h-full ${COLOR_MAP[color]}`}
-            style={{ width: `${value}%` }}
-          />
-        </View>
+      </View>
+
+      {/* Progress Bar */}
+      <View className="w-full h-4 bg-gray-300 rounded-full overflow-hidden">
+        <View
+          className={`${COLOR_MAP[color]} h-full rounded-full`}
+          style={{ width: `${Math.min(value, 100)}%` }}
+        />
       </View>
     </View>
   );
