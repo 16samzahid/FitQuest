@@ -6,11 +6,12 @@ import Avatar from "../../components/Avatar";
 import PetStatsCard from "../../components/PetStatsCard";
 import PinModal from "../../components/PinModal";
 import Tasks from "../../components/Tasks";
+import { useAppData } from "../../context/AppDataContext";
 import { useMode } from "../../context/ModeContext";
 
 export default function ChildHome() {
   const { setMode } = useMode();
-  const childName = "Sam";
+  const { child, loading } = useAppData();
   const [showPin, setShowPin] = useState(false);
   return (
     <SafeAreaView className="flex-1 px-4 pt-4">
@@ -41,7 +42,7 @@ export default function ChildHome() {
       />
 
       <Text className="text-2xl font-bold text-center text-indigo-700">
-        Welcome {childName}!
+        Welcome {loading ? "..." : child ? child.name : "Guest"}!
       </Text>
       {/* Avatar */}
       <View className="flex-row justify-center justify-evenly">
@@ -52,7 +53,12 @@ export default function ChildHome() {
       {/* Insert a card with summary for example 1/3 tasks done */}
 
       {/* Level */}
-      <PetStatsCard health={75} hunger={50} happiness={90} />
+      <PetStatsCard
+        health={child?.health ?? 0}
+        hunger={child?.hunger ?? 0}
+        happiness={child?.happiness ?? 0}
+        loading={loading}
+      />
 
       {/* Tasks / Cards */}
       <Tasks />
