@@ -10,6 +10,7 @@ const DEV_CHILD_ID = "OdxfJV1HNkkIzNCMG0cr";
 export function AppDataProvider({ children }) {
   const [child, setChild] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pet, setPet] = useState(null);
 
   const fetchChild = async () => {
     setLoading(true);
@@ -18,6 +19,18 @@ export function AppDataProvider({ children }) {
 
     if (snap.exists()) {
       setChild({ id: snap.id, ...snap.data() });
+      const petID = snap.data().petID;
+      const petSnap = await getDoc(doc(db, "Pet", petID));
+      if (petSnap.exists()) {
+        const colourSnap = await getDoc(
+          doc(db, "Colours", petSnap.data().colourID),
+        );
+        let imageURL = petSnap.data().defaultImageURL;
+        if (colourSnap.exists()) {
+          imageURL = colourSnap.data().imageURL;
+        }
+        setPet({ id: petSnap.id, ...petSnap.data(), imageURL });
+      }
     }
 
     setLoading(false);
@@ -34,6 +47,7 @@ export function AppDataProvider({ children }) {
         setChild,
         refreshChild: fetchChild,
         loading,
+        pet,
       }}
     >
       {children}

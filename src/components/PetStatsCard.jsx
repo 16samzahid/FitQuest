@@ -12,7 +12,7 @@ export default function PetStatsCard({
   const cookie = <FontAwesome5 name="cookie-bite" size={28} color="#80420B" />;
   const heart = <AntDesign name="heart" size={28} color="#FD4545" />;
   const smile = (
-    <MaterialCommunityIcons name="emoticon-happy" size={28} color="#f1cc11" />
+    <MaterialCommunityIcons name="emoticon-happy" size={28} color="#fcbb0a" />
   );
   return (
     <View className="mt-5 bg-white rounded-3xl px-5 py-4 border border-gray-200 shadow-sm relative">
