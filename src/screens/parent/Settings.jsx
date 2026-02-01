@@ -1,6 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { signOut } from "firebase/auth";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { auth } from "../../../config/FirebaseConfig.js";
 import { useMode } from "../../context/ModeContext";
 
 const Settings = () => {
@@ -20,6 +22,17 @@ const Settings = () => {
           }}
         >
           <Ionicons name="swap-horizontal" size={30} color="#374151" />
+        </Pressable>
+        <Pressable
+          onPress={() => signOut(auth)}
+          style={{
+            position: "absolute",
+            top: 20,
+            left: 20,
+            zIndex: 10,
+          }}
+        >
+          <Ionicons name="person" size={30} color="#374151" />
         </Pressable>
       </View>
     </SafeAreaView>
