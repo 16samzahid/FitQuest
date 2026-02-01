@@ -1,10 +1,18 @@
 import { View } from "react-native";
 
-export default function TaskCard({ color }) {
+export default function TaskCard({
+  progress = 0.25, // 0 → 1
+  color = "bg-red-500",
+}) {
   return (
-    <View className="bg-white rounded-2xl p-5 shadow mb-6">
-      <View className="h-3 w-20 rounded-full mb-2 bg-gray-200">
-        <View className={`h-full ${color} rounded-full w-1/3`} />
+    <View className="mb-6">
+      {/* Card container with colored bar on left */}
+      <View className="flex-row h-24 rounded-3xl bg-white overflow-hidden border-8 border-gray-300 shadow-lg">
+        {/* Colored left bar */}
+        <View className={`w-16 ${color} rounded-r-xl`} />
+
+        {/* Empty content area */}
+        <View className="flex-1"></View>
       </View>
     </View>
   );

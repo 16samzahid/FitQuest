@@ -2,7 +2,7 @@ import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Avatar from "../../components/Avatar";
 import LevelCoinSection from "../../components/LevelCoinSection";
-import PetStatsCard from "../../components/PetStatsCard";
+import Shop from "../../components/Shop";
 import { useAppData } from "../../context/AppDataContext";
 
 const ChildPet = () => {
@@ -10,17 +10,10 @@ const ChildPet = () => {
   return (
     <SafeAreaView className="flex-1 px-4 pt-4">
       {/* Avatar */}
-      <View className="flex-row justify-center mt-10 mb-10 justify-evenly width-full">
+      <View className="mt-10 mb-10 items-center w-full">
         <Avatar width={450} height={450} />
         {/* Stats */}
-        <View className="flex-1 ml-4">
-          <PetStatsCard
-            health={child?.health ?? 0}
-            hunger={child?.hunger ?? 0}
-            happiness={child?.happiness ?? 0}
-            loading={loading}
-          />
-        </View>
+        <View className="flex-1 ml-4"></View>
       </View>
 
       {/* Level */}
@@ -37,6 +30,15 @@ const ChildPet = () => {
       ) : null}
 
       {/* Colours and Accessories */}
+      <Shop
+        colours={["#FF4351", "#FF43EC", "#65FF43", "#6E43FF"]}
+        accessories={[
+          { name: "Hat" },
+          { name: "Glasses" },
+          { name: "Shoes" },
+          { name: "Backpack" },
+        ]}
+      />
     </SafeAreaView>
   );
 };

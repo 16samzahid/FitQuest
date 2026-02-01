@@ -15,20 +15,20 @@ export default function PetStatsCard({
     <MaterialCommunityIcons name="emoticon-happy" size={28} color="#f1cc11" />
   );
   return (
-    <View className="mt-5 shadow-md bg-white rounded-3xl p-4">
-      <View className="flex-row">
-        {/* Health Bar */}
-        <View className="flex-1 mr-3">
+    <View className="mt-5 bg-white rounded-3xl px-5 py-4 border border-gray-200 shadow-sm relative">
+      {/* Bubble shine */}
+      <View className="absolute top-2 left-4 h-2 w-16 bg-white/60 rounded-full" />
+
+      <View className="flex-row items-center">
+        <View className="flex-1 mx-1">
           <StatBar label="Health" color="red" value={health} icon={heart} />
         </View>
 
-        {/* Hunger Bar */}
-        <View className="flex-1 mr-3">
+        <View className="flex-1 mx-1">
           <StatBar label="Hunger" color="green" value={hunger} icon={cookie} />
         </View>
 
-        {/* Happiness Bar */}
-        <View className="flex-1">
+        <View className="flex-1 mx-1">
           <StatBar
             label="Happiness"
             color="blue"
