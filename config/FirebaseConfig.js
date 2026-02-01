@@ -1,11 +1,14 @@
-// Import the functions you need from the SDKs you need
+// Firebase core
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Firestore
+import { getFirestore } from "firebase/firestore";
+
+// Firebase Auth (React Native)
+// AsyncStorage for persistence
+import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
+import { getReactNativePersistence, initializeAuth } from "firebase/auth";
+// Firebase configuration
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -18,4 +21,11 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Initialize Auth with persistence (THIS FIXES THE WARNING)
+export const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+});
+
+// Firestore
 export const db = getFirestore(app);
