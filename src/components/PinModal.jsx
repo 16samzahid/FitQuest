@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Modal, Pressable, Text, TextInput, View } from "react-native";
+import { useAppData } from "../context/AppDataContext";
 
-const CORRECT_PIN = "1234";
+// const CORRECT_PIN = "1234";
 
 export default function PinModal({ visible, onClose, onSuccess }) {
+  const { parent } = useAppData();
+  const CORRECT_PIN = parent?.pin || "1234";
   const [pin, setPin] = useState(["", "", "", ""]);
   const [error, setError] = useState("");
 
