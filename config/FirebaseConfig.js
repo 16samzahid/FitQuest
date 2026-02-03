@@ -6,8 +6,7 @@ import { getFirestore } from "firebase/firestore";
 
 // Firebase Auth (React Native)
 // AsyncStorage for persistence
-import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
-import { getReactNativePersistence, initializeAuth } from "firebase/auth";
+import { initializeAuth } from "firebase/auth";
 // Firebase configuration
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -23,9 +22,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Initialize Auth with persistence (THIS FIXES THE WARNING)
-export const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
-});
+export const auth = initializeAuth(app);
 
 // Firestore
 export const db = getFirestore(app);
