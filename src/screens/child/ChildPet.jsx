@@ -18,9 +18,9 @@ const ChildPet = () => {
 
       {/* Level */}
       <LevelCoinSection
-        level={child?.level ?? 1}
-        progress={child?.progress ?? 0}
-        coins={child?.coins ?? 0}
+        level={child?.level}
+        progress={child?.xp}
+        coins={child?.coins}
       />
 
       {!child && !loading ? (
