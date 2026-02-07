@@ -1,9 +1,6 @@
-import { View } from "react-native";
+import { Text, View } from "react-native";
 
-export default function TaskCard({
-  progress = 0.25, // 0 → 1
-  color = "bg-red-500",
-}) {
+export default function TaskCard({ color = "bg-red-500", text = "Task Name" }) {
   return (
     <View className="mb-6">
       {/* Card container with colored bar on left */}
@@ -12,7 +9,11 @@ export default function TaskCard({
         <View className={`w-16 ${color} rounded-r-xl`} />
 
         {/* Empty content area */}
-        <View className="flex-1"></View>
+        <View className="flex-1">
+          <Text className="text-lg font-semibold p-4 align-middle justify-center">
+            {text}
+          </Text>
+        </View>
       </View>
     </View>
   );
