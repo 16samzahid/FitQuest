@@ -1,14 +1,15 @@
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { ScrollView } from "react-native";
+import { ScrollView, Text } from "react-native";
 import { db } from "../../config/FirebaseConfig";
 import { useAppData } from "../context/AppDataContext";
 import TaskCard from "./TaskCard";
 
 function Tasks() {
-  // will instead take tasks from the parent and display using v-for
-  const { child } = useAppData();
+  const { child, loading } = useAppData();
   const [tasks, setTasks] = useState([]);
+
+  // 🔗 category → stat (MATCH FIRESTORE CASE)
   const categoryToStat = {
     Exercise: "health",
     Hygiene: "health",
@@ -19,47 +20,60 @@ function Tasks() {
     Learning: "happiness",
     Play: "happiness",
   };
+
+  // 🎨 stat → bg colour
   const statToBgClass = {
     health: "bg-red",
     hunger: "bg-green",
-    happiness: "bg-lightBlue", // light blue
+    happiness: "bg-lightBlue",
   };
+
   const getBgForCategory = (category) => {
     const stat = categoryToStat[category];
     return statToBgClass[stat] ?? "bg-gray-300";
   };
 
-  const fetchTasks = async () => {
-    const q = query(collection(db, "Task"), where("childID", "==", child.id));
+  useEffect(() => {
+    if (!child) return; // ✅ GUARD
+    fetchTasks();
+  }, [child]);
 
-    const tasksSnap = await getDocs(q);
-    // const tasksSnap = await getDocs(collection(db, "Task"));
-    const tasks = tasksSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    setTasks(tasks);
-    console.log(tasks);
+  const fetchTasks = async () => {
+    try {
+      const q = query(collection(db, "Task"), where("childID", "==", child.id));
+
+      const tasksSnap = await getDocs(q);
+
+      const fetchedTasks = tasksSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      console.log("Fetched tasks:", fetchedTasks);
+      setTasks(fetchedTasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
   };
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  if (loading || !child) {
+    return (
+      <Text className="mt-6 text-center text-gray-400">Loading tasks...</Text>
+    );
+  }
 
   return (
     <ScrollView
       className="mt-6 space-y-4 rounded-t-3xl px-2 shadow-md bg-white p-5"
       showsVerticalScrollIndicator={false}
     >
-      {tasks.map(
-        (task, index) => (
-          console.log(task),
-          (
-            <TaskCard
-              key={index}
-              color={getBgForCategory(task.category)}
-              text={task.description}
-            />
-          )
-        ),
-      )}
+      {tasks.map((task) => (
+        <TaskCard
+          key={task.id}
+          color={getBgForCategory(task.category)}
+          text={task.description}
+        />
+      ))}
     </ScrollView>
   );
 }
