@@ -55,17 +55,17 @@ export function AppDataProvider({ children }) {
       setChild(childData);
 
       // 3️⃣ Fetch pet
-      const petSnap = await getDoc(doc(db, "Pet", childData.petID));
+      // const petSnap = await getDoc(doc(db, "Pet", childData.petID));
 
-      if (!petSnap.exists()) {
+      const petData = childData.pet;
+
+      if (!petData) {
         setLoading(false);
         return;
       }
 
-      const petData = petSnap.data();
-
       // 4️⃣ Fetch colour (optional)
-      let imageURL = petData.defaultImageURL;
+      let imageURL = null;
 
       if (petData.colourID) {
         const colourSnap = await getDoc(doc(db, "Colours", petData.colourID));
@@ -74,7 +74,16 @@ export function AppDataProvider({ children }) {
         }
       }
 
-      setPet({ id: petSnap.id, ...petData, imageURL });
+      let moodImageURL = null;
+
+      if (petData.mood) {
+        const moodSnap = await getDoc(doc(db, "Mood", petData.mood));
+        if (moodSnap.exists()) {
+          moodImageURL = moodSnap.data().imageURL;
+        }
+      }
+
+      setPet({ ...petData, imageURL, moodImageURL });
     } catch (err) {
       console.error("AppData fetch error:", err);
     }
