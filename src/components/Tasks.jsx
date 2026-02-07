@@ -1,12 +1,13 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { ScrollView } from "react-native";
 import { db } from "../../config/FirebaseConfig";
+import { useAppData } from "../context/AppDataContext";
 import TaskCard from "./TaskCard";
 
 function Tasks() {
   // will instead take tasks from the parent and display using v-for
-  const colors = ["bg-red", "bg-green", "bg-lightBlue"];
+  const { child } = useAppData();
   const [tasks, setTasks] = useState([]);
   const categoryToStat = {
     Exercise: "health",
@@ -28,10 +29,11 @@ function Tasks() {
     return statToBgClass[stat] ?? "bg-gray-300";
   };
 
-  const category = "Food";
-
   const fetchTasks = async () => {
-    const tasksSnap = await getDocs(collection(db, "Task"));
+    const q = query(collection(db, "Task"), where("childID", "==", child.id));
+
+    const tasksSnap = await getDocs(q);
+    // const tasksSnap = await getDocs(collection(db, "Task"));
     const tasks = tasksSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     setTasks(tasks);
     console.log(tasks);
