@@ -1,8 +1,33 @@
-import { useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { db } from "../../config/FirebaseConfig";
 
-const Shop = ({ colours = [], accessories = [] }) => {
+const Shop = ({ accessories = [] }) => {
   const [activeTab, setActiveTab] = useState("colours");
+  const [colours, setColours] = useState([]);
+
+  const fetchShopData = async () => {
+    try {
+      const shopSnap = await getDocs(collection(db, "Colours"));
+      if (!shopSnap.empty) {
+        const shops = shopSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setColours(shops);
+        console.log("Colours:", shops);
+      } else {
+        console.log("No colours found");
+      }
+    } catch (error) {
+      console.error("Error fetching colours:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchShopData();
+  }, []);
 
   return (
     <View className="bg-white rounded-t-3xl h-[395px] w-full overflow-hidden mt-5">
@@ -31,12 +56,16 @@ const Shop = ({ colours = [], accessories = [] }) => {
       <ScrollView className="flex-1 bg-gray-300 p-4">
         {activeTab === "colours" ? (
           <View className="flex-row flex-wrap justify-between">
-            {colours.map((colour, index) => (
-              <Pressable
-                key={index}
-                className="h-32 w-32 rounded-full mb-4 border-2 border-black"
-                style={{ backgroundColor: colour }}
-              />
+            {colours.map((colour) => (
+              <View key={colour.id} className="items-center mb-4">
+                <Pressable
+                  className="h-32 w-32 rounded-full border-2 border-black"
+                  style={{ backgroundColor: colour.hex }}
+                />
+                <Text className="mt-2 font-semibold text-sm">
+                  {colour.name}
+                </Text>
+              </View>
             ))}
           </View>
         ) : (
