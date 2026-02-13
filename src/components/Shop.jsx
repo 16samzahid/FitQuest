@@ -57,7 +57,7 @@ const Shop = ({ accessories = [] }) => {
             activeTab === "colours" ? "bg-gray-300" : "bg-white"
           }`}
         >
-          <Text className="font-bold text-sm">Colours</Text>
+          <Text className="font-bold text-lg">Colours</Text>
         </Pressable>
 
         <Pressable
@@ -66,7 +66,7 @@ const Shop = ({ accessories = [] }) => {
             activeTab === "accessories" ? "bg-gray-300" : "bg-white"
           }`}
         >
-          <Text className="font-bold text-sm">Accessories</Text>
+          <Text className="font-bold text-lg">Accessories</Text>
         </Pressable>
       </View>
 
@@ -80,7 +80,11 @@ const Shop = ({ accessories = [] }) => {
             {colours.map((colour) => (
               <View key={colour.id} className="items-center mb-4">
                 <Pressable
-                  className="h-32 w-32 rounded-full border-2 border-black"
+                  className={`h-32 w-32 rounded-full ${
+                    pet?.colourID === colour.id
+                      ? "border-4 border-black"
+                      : "border-0"
+                  }`}
                   style={{ backgroundColor: colour.hex }}
                   onPress={changeColour(colour.id)}
                 />

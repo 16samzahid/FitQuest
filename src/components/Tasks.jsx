@@ -64,7 +64,7 @@ function Tasks() {
 
   return (
     <ScrollView
-      className="mt-6 space-y-4 rounded-t-3xl px-2 shadow-md bg-white p-5"
+      className="mt-6 space-y-4 rounded-t-3xl px-3 shadow-md bg-white p-5"
       showsVerticalScrollIndicator={false}
     >
       {tasks.map((task) => (
