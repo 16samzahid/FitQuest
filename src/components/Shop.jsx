@@ -1,16 +1,17 @@
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { db } from "../../config/FirebaseConfig";
 import { useAppData } from "../context/AppDataContext";
 
-const Shop = ({ accessories = [] }) => {
+const Shop = () => {
   const { pet, setPet } = useAppData();
   const [activeTab, setActiveTab] = useState("colours");
   const [colours, setColours] = useState([]);
+  const [accessories, setAccessories] = useState([]);
 
   const changeColour = (colourId) => async () => {
-    console.log("Changing colour to ID:", colourId);
+    // console.log("Changing colour to ID:", colourId);
 
     // Fetch the imageURL for this colour from Firestore
     try {
@@ -27,14 +28,19 @@ const Shop = ({ accessories = [] }) => {
 
   const fetchShopData = async () => {
     try {
-      const shopSnap = await getDocs(collection(db, "Colours"));
-      if (!shopSnap.empty) {
-        const shops = shopSnap.docs.map((doc) => ({
+      const colourSnap = await getDocs(collection(db, "Colours"));
+      const accessorySnap = await getDocs(collection(db, "Accessories"));
+      if (!colourSnap.empty && !accessorySnap.empty) {
+        const shops = colourSnap.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
         setColours(shops);
-        console.log("Colours:", shops);
+        const accessories = accessorySnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setAccessories(accessories);
       } else {
         console.log("No colours found");
       }
@@ -99,9 +105,19 @@ const Shop = ({ accessories = [] }) => {
             {accessories.map((item, index) => (
               <Pressable
                 key={index}
-                className="h-40 w-40 rounded-xl bg-gray-400 mb-4"
+                className="h-40 w-40 rounded-xl bg-white mb-4 p-3"
               >
-                <Text className="text-center mt-2 font-semibold">
+                {/* Image Container */}
+                <View className="flex-1 items-center justify-center">
+                  <Image
+                    source={{ uri: item.thumbnailURL }}
+                    className="w-full h-full"
+                    resizeMode="contain"
+                  />
+                </View>
+
+                {/* Name */}
+                <Text className="text-center font-semibold text-lg mt-1">
                   {item.name}
                 </Text>
               </Pressable>

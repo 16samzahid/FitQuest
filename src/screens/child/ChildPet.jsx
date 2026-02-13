@@ -31,13 +31,13 @@ const ChildPet = () => {
 
       {/* Colours and Accessories */}
       <Shop
-        // colours={["#FF4351", "#FF43EC", "#65FF43", "#6E43FF"]}
-        accessories={[
-          { name: "Hat" },
-          { name: "Glasses" },
-          { name: "Shoes" },
-          { name: "Backpack" },
-        ]}
+      // colours={["#FF4351", "#FF43EC", "#65FF43", "#6E43FF"]}
+      // accessories={[
+      //   { name: "Hat" },
+      //   { name: "Glasses" },
+      //   { name: "Shoes" },
+      //   { name: "Backpack" },
+      // ]}
       />
     </SafeAreaView>
   );
