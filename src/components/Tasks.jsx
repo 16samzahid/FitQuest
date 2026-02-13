@@ -72,6 +72,7 @@ function Tasks() {
           key={task.id}
           color={getBgForCategory(task.category)}
           text={task.description}
+          xp={task.xp}
         />
       ))}
     </ScrollView>

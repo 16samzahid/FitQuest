@@ -30,7 +30,7 @@ const Shop = ({ accessories = [] }) => {
   }, []);
 
   return (
-    <View className="bg-white rounded-t-3xl h-[395px] w-full overflow-hidden mt-5">
+    <View className="bg-white rounded-t-3xl flex-1 w-full mt-5">
       {/* Tabs */}
       <View className="flex-row">
         <Pressable
@@ -53,9 +53,12 @@ const Shop = ({ accessories = [] }) => {
       </View>
 
       {/* Content */}
-      <ScrollView className="flex-1 bg-gray-300 p-4">
+      <ScrollView
+        className="flex-1 bg-gray-300 p-4"
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
         {activeTab === "colours" ? (
-          <View className="flex-row flex-wrap justify-between">
+          <View className="flex-row flex-wrap justify-start gap-2">
             {colours.map((colour) => (
               <View key={colour.id} className="items-center mb-4">
                 <Pressable
