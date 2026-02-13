@@ -1,11 +1,29 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { db } from "../../config/FirebaseConfig";
+import { useAppData } from "../context/AppDataContext";
 
 const Shop = ({ accessories = [] }) => {
+  const { pet, setPet } = useAppData();
   const [activeTab, setActiveTab] = useState("colours");
   const [colours, setColours] = useState([]);
+
+  const changeColour = (colourId) => async () => {
+    console.log("Changing colour to ID:", colourId);
+
+    // Fetch the imageURL for this colour from Firestore
+    try {
+      const colourSnap = await getDoc(doc(db, "Colours", colourId));
+      if (colourSnap.exists()) {
+        const imageURL = colourSnap.data().imageURL;
+        setPet((prev) => ({ ...prev, colourID: colourId, imageURL }));
+        console.log("Updated pet with new colour and imageURL");
+      }
+    } catch (error) {
+      console.error("Error fetching colour imageURL:", error);
+    }
+  };
 
   const fetchShopData = async () => {
     try {
@@ -64,6 +82,7 @@ const Shop = ({ accessories = [] }) => {
                 <Pressable
                   className="h-32 w-32 rounded-full border-2 border-black"
                   style={{ backgroundColor: colour.hex }}
+                  onPress={changeColour(colour.id)}
                 />
                 <Text className="mt-2 font-semibold text-sm">
                   {colour.name}
