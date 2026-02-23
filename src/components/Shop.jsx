@@ -1,11 +1,17 @@
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  updateDoc,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { db } from "../../config/FirebaseConfig";
 import { useAppData } from "../context/AppDataContext";
 
 const Shop = () => {
-  const { pet, setPet } = useAppData();
+  const { pet, setPet, child } = useAppData();
   const [activeTab, setActiveTab] = useState("colours");
   const [colours, setColours] = useState([]);
   const [accessories, setAccessories] = useState([]);
@@ -18,6 +24,10 @@ const Shop = () => {
       const colourSnap = await getDoc(doc(db, "Colours", colourId));
       if (colourSnap.exists()) {
         const imageURL = colourSnap.data().imageURL;
+        await updateDoc(doc(db, "Child", child.id), {
+          "pet.colourID": colourId,
+          "pet.imageURL": imageURL,
+        });
         setPet((prev) => ({ ...prev, colourID: colourId, imageURL }));
         console.log("Updated pet with new colour and imageURL");
       }
@@ -54,12 +64,12 @@ const Shop = () => {
   }, []);
 
   return (
-    <View className="bg-white rounded-t-3xl flex-1 w-full mt-5">
+    <View className="rounded-t-3xl flex-1 w-full mt-5">
       {/* Tabs */}
       <View className="flex-row">
         <Pressable
           onPress={() => setActiveTab("colours")}
-          className={`flex-1 h-8 items-center justify-center border border-black rounded-tl-3xl ${
+          className={`flex-1 h-8 items-center justify-center rounded-t-3xl ${
             activeTab === "colours" ? "bg-gray-300" : "bg-white"
           }`}
         >
@@ -68,7 +78,7 @@ const Shop = () => {
 
         <Pressable
           onPress={() => setActiveTab("accessories")}
-          className={`flex-1 h-8 items-center justify-center border border-black rounded-tr-3xl ${
+          className={`flex-1 h-8 items-center justify-center rounded-t-3xl ${
             activeTab === "accessories" ? "bg-gray-300" : "bg-white"
           }`}
         >
@@ -82,19 +92,19 @@ const Shop = () => {
         contentContainerStyle={{ paddingBottom: 40 }}
       >
         {activeTab === "colours" ? (
-          <View className="flex-row flex-wrap justify-start gap-2">
+          <View className="flex-row flex-wrap">
             {colours.map((colour) => (
-              <View key={colour.id} className="items-center mb-4">
+              <View key={colour.id} className="w-1/3 items-center mb-4">
                 <Pressable
                   className={`h-32 w-32 rounded-full ${
                     pet?.colourID === colour.id
                       ? "border-4 border-black"
-                      : "border-0"
+                      : "border border-transparent"
                   }`}
                   style={{ backgroundColor: colour.hex }}
                   onPress={changeColour(colour.id)}
                 />
-                <Text className="mt-2 font-semibold text-sm">
+                <Text className="mt-2 font-semibold text-sm text-center">
                   {colour.name}
                 </Text>
               </View>

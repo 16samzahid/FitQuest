@@ -1,4 +1,9 @@
-import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  query,
+  where
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { ScrollView, Text } from "react-native";
 import { db } from "../../config/FirebaseConfig";
@@ -34,27 +39,22 @@ function Tasks() {
   };
 
   useEffect(() => {
-    if (!child) return; // ✅ GUARD
-    fetchTasks();
-  }, [child]);
+    if (!child) return;
 
-  const fetchTasks = async () => {
-    try {
-      const q = query(collection(db, "Task"), where("childID", "==", child.id));
+    const q = query(collection(db, "Task"), where("childID", "==", child.id));
 
-      const tasksSnap = await getDocs(q);
-
-      const fetchedTasks = tasksSnap.docs.map((doc) => ({
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const updatedTasks = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
 
-      console.log("Fetched tasks:", fetchedTasks);
-      setTasks(fetchedTasks);
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-    }
-  };
+      setTasks(updatedTasks);
+    });
+
+    // Cleanup listener when component unmounts
+    return () => unsubscribe();
+  }, [child]);
 
   if (loading || !child) {
     return (
