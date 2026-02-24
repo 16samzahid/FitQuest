@@ -1,11 +1,11 @@
 import { useNavigation } from "@react-navigation/native";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
 import { Pressable, Text, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { auth } from "../../config/FirebaseConfig";
 
-const Login = () => {
+const Signup = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,16 +20,22 @@ const Login = () => {
   //   }
   // }, []);
 
-  const signIn = async () => {
+  const signUp = async () => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await createUserWithEmailAndPassword(auth, email, password);
     } catch (err) {
       setError(err.message);
     }
+    console.log("Sign up attempted with email:", email);
   };
 
-  const signUp = async () => {
-    navigation.replace("Signup");
+  const login = async () => {
+    // try {
+    //   await signInWithEmailAndPassword(auth, email, password);
+    // } catch (err) {
+    //   setError(err.message);
+    // }
+    navigation.replace("Login");
   };
 
   return (
@@ -54,16 +60,9 @@ const Login = () => {
 
       {error && (
         <Text className="text-red-600 text-center mb-2 font-semibold">
-          Username or Password incorrect
+          Email already in use
         </Text>
       )}
-
-      <Pressable
-        className="bg-indigo-600 py-4 rounded-xl mb-3"
-        onPress={signIn}
-      >
-        <Text className="text-white text-center font-semibold">Login</Text>
-      </Pressable>
 
       <Pressable
         className="border border-indigo-600 py-4 rounded-xl"
@@ -73,8 +72,14 @@ const Login = () => {
           Sign up
         </Text>
       </Pressable>
+
+      <Pressable onPress={login}>
+        <Text className="text-gray-600 text-center font-semibold mt-4 text-md">
+          Already have an account? Log in
+        </Text>
+      </Pressable>
     </SafeAreaView>
   );
 };
 
-export default Login;
+export default Signup;

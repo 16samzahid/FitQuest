@@ -15,7 +15,7 @@ export default function PetStatsCard({
     <MaterialCommunityIcons name="emoticon-happy" size={28} color="#fcbb0a" />
   );
   return (
-    <View className="mt-5 bg-white rounded-3xl px-5 py-4 border border-gray-200 shadow-sm relative">
+    <View className="mt-5 bg-white rounded-3xl px-5 py-4 border border-gray-200 shadow-md relative">
       {/* Bubble shine */}
       <View className="absolute top-2 left-4 h-2 w-16 bg-white/60 rounded-full" />
 

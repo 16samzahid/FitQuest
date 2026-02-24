@@ -98,10 +98,10 @@ export function AppDataProvider({ children }) {
 
   // 🔍 correct way to log state changes
   useEffect(() => {
-    console.log(user.uid);
-    console.log("PARENT:", parent);
-    console.log("CHILD:", child);
-    console.log("PET:", pet);
+    // console.log(user.uid);
+    // console.log("PARENT:", parent);
+    // console.log("CHILD:", child);
+    // console.log("PET:", pet);
   }, [parent, child, pet]);
 
   return (
@@ -109,7 +109,9 @@ export function AppDataProvider({ children }) {
       value={{
         parent,
         child,
+        setChild,
         pet,
+        setPet,
         loading,
         refreshData: fetchData,
       }}

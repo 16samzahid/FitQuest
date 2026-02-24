@@ -1,6 +1,5 @@
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { useMode } from "../context/ModeContext";
 import ManageTasks from "../screens/parent/ManageTasks";
 import ParentDashboard from "../screens/parent/ParentDashboard";
 import Settings from "../screens/parent/Settings";
@@ -8,50 +7,41 @@ import Settings from "../screens/parent/Settings";
 const Tab = createBottomTabNavigator();
 
 export default function ParentNavigator() {
-  const { setMode } = useMode();
   return (
     <Tab.Navigator
       initialRouteName="Dashboard"
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarIcon: ({ color, size }) => {
+
+        tabBarStyle: {
+          backgroundColor: "#302ECC",
+          borderTopWidth: 0,
+        },
+
+        tabBarIcon: ({ color }) => {
           const icons = {
             Dashboard: "home",
-            ManageTasks: "tasks",
+            Tasks: "tasks", // ← FontAwesome5 version
             Settings: "cog",
           };
 
           return (
-            <FontAwesome name={icons[route.name]} color={color} size={size} />
+            <FontAwesome5
+              name={icons[route.name]}
+              color={color}
+              size={24}
+              solid
+            />
           );
         },
-        tabBarActiveTintColor: "#101010",
-        tabBarInactiveTintColor: "#fffefe",
-        tabBarLabelPosition: "below-icon",
-        tabBarActiveBackgroundColor: "#d1d5db",
+
+        tabBarActiveTintColor: "#FFFFFF",
+        tabBarInactiveTintColor: "rgba(255,255,255,0.5)",
       })}
     >
-      <Tab.Screen
-        options={{
-          tabBarStyle: { backgroundColor: "#2C7ED0" },
-        }}
-        name="Dashboard"
-        component={ParentDashboard}
-      />
-      <Tab.Screen
-        options={{
-          tabBarStyle: { backgroundColor: "#2C7ED0" },
-        }}
-        name="ManageTasks"
-        component={ManageTasks}
-      />
-      <Tab.Screen
-        options={{
-          tabBarStyle: { backgroundColor: "#2C7ED0" },
-        }}
-        name="Settings"
-        component={Settings}
-      />
+      <Tab.Screen name="Dashboard" component={ParentDashboard} />
+      <Tab.Screen name="Tasks" component={ManageTasks} />
+      <Tab.Screen name="Settings" component={Settings} />
     </Tab.Navigator>
   );
 }

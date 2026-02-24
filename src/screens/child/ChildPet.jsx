@@ -11,7 +11,7 @@ const ChildPet = () => {
     <SafeAreaView className="flex-1 px-4 pt-4">
       {/* Avatar */}
       <View className="mt-10 mb-10 items-center w-full">
-        <Avatar width={450} height={450} />
+        <Avatar width={400} height={400} />
         {/* Stats */}
         <View className="flex-1 ml-4"></View>
       </View>
@@ -31,13 +31,13 @@ const ChildPet = () => {
 
       {/* Colours and Accessories */}
       <Shop
-        colours={["#FF4351", "#FF43EC", "#65FF43", "#6E43FF"]}
-        accessories={[
-          { name: "Hat" },
-          { name: "Glasses" },
-          { name: "Shoes" },
-          { name: "Backpack" },
-        ]}
+      // colours={["#FF4351", "#FF43EC", "#65FF43", "#6E43FF"]}
+      // accessories={[
+      //   { name: "Hat" },
+      //   { name: "Glasses" },
+      //   { name: "Shoes" },
+      //   { name: "Backpack" },
+      // ]}
       />
     </SafeAreaView>
   );
