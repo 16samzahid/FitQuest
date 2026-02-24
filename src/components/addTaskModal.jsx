@@ -17,9 +17,10 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
 
   const handleCreate = () => {
     if (!description.trim()) return;
-    onCreate({ description: description.trim(), approvalNeeded });
+    onCreate({ description: description.trim(), approvalNeeded, category });
     setDescription("");
     setApprovalNeeded(true);
+    setCategory(null);
   };
 
   return (

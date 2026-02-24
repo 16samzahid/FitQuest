@@ -6,19 +6,21 @@ import AddTaskModal from "../../components/addTaskModal";
 import { createTask } from "../../services/taskService";
 
 const ManageTasks = () => {
+  // setting the values to be updated in backend
   const { child } = useAppData();
   const [modalVisible, setModalVisible] = useState(false);
 
-  const handleCreateTask = async (description, approvalNeeded) => {
+  const handleCreateTask = async (description, approvalNeeded, category) => {
     if (!child) {
       alert("No child selected");
+      alert("Please select a child before creating a task");
       return;
     }
     try {
       await createTask({
         approvalNeeded: approvalNeeded,
         approvedBy: null,
-        category: "Exercise",
+        category: category,
         childID: child.id,
         coins: 10,
         completedAt: null,
@@ -48,8 +50,8 @@ const ManageTasks = () => {
         <AddTaskModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
-          onCreate={({ description, approvalNeeded }) =>
-            handleCreateTask(description, approvalNeeded)
+          onCreate={({ description, approvalNeeded, category }) =>
+            handleCreateTask(description, approvalNeeded, category)
           }
         />
       </View>
