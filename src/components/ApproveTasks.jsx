@@ -1,11 +1,32 @@
 import { FontAwesome } from "@expo/vector-icons";
-import { useState } from "react";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { db } from "../../config/FirebaseConfig";
+import { useAppData } from "../context/AppDataContext";
 import ApproveTaskCard from "./ApproveTaskCard";
 
 export default function ApproveTasks() {
+  const { child } = useAppData();
   const [helpVisible, setHelpVisible] = useState(false);
+  const [tasks, setTasks] = useState([]);
 
+  useEffect(() => {
+    const q = query(
+      collection(db, "Task"),
+      where("childID", "==", child.id),
+      where("status", "==", "pending"),
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const updatedTasks = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setTasks(updatedTasks);
+    });
+
+    return () => unsubscribe();
+  }, [child]);
   return (
     <>
       <View className="mt-5 bg-white rounded-t-[40px] shadow-md flex-1">
@@ -23,9 +44,14 @@ export default function ApproveTasks() {
           className="mt-4 p-2 rounded-t-[40px]"
           showsVerticalScrollIndicator={false}
         >
-          <ApproveTaskCard text="Do 20 push-ups" xp={20} />
-          <ApproveTaskCard text="Eat a healthy meal" xp={15} />
-          <ApproveTaskCard text="Read for 30 minutes" xp={10} />
+          {tasks.map((task) => (
+            <ApproveTaskCard
+              key={task.id}
+              text={task.description}
+              xp={task.xp}
+              taskID={task.id}
+            />
+          ))}
         </ScrollView>
       </View>
 

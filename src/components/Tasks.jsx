@@ -1,9 +1,4 @@
-import {
-  collection,
-  onSnapshot,
-  query,
-  where
-} from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { ScrollView, Text } from "react-native";
 import { db } from "../../config/FirebaseConfig";
@@ -41,7 +36,11 @@ function Tasks() {
   useEffect(() => {
     if (!child) return;
 
-    const q = query(collection(db, "Task"), where("childID", "==", child.id));
+    const q = query(
+      collection(db, "Task"),
+      where("childID", "==", child.id),
+      where("status", "==", "notdone"),
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const updatedTasks = snapshot.docs.map((doc) => ({
