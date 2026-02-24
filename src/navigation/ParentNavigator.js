@@ -14,7 +14,7 @@ export default function ParentNavigator() {
         headerShown: false,
 
         tabBarStyle: {
-          backgroundColor: "#2C7ED0",
+          backgroundColor: "#302ECC",
           borderTopWidth: 0,
         },
 
