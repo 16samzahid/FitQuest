@@ -2,7 +2,7 @@ import { Text, View } from "react-native";
 
 export default function ProgressStats() {
   return (
-    <View className="mt-5 bg-[#E6E5FF] rounded-[40px] px-4 shadow-md relative h-[45%] items-center">
+    <View className="mt-5 bg-[#E6E5FF] rounded-[40px] px-4 shadow-md relative h-[40%] items-center">
       <Text className="text-[#150F59] text-[20px] font-bold mt-4">
         Harry&apos;s Progress
       </Text>
