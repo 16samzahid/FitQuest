@@ -81,8 +81,8 @@ function Tasks() {
         <ConfettiCannon
           count={80}
           origin={{ x: width / 2, y: 0 }}
-          explosionSpeed={100}
-          fallSpeed={5000}
+          explosionSpeed={1000}
+          fallSpeed={1500}
           fadeOut
         />
       )}
