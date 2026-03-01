@@ -1,5 +1,6 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { Text, TouchableOpacity, View } from "react-native";
+import React, { useRef } from "react";
+import { Animated, Text, TouchableOpacity, View } from "react-native";
 import { completeTask } from "../services/taskService";
 
 export default function TaskCard({
@@ -7,12 +8,30 @@ export default function TaskCard({
   color = "bg-red-500",
   text = "Task Name",
   xp = 10,
+  onComplete,
 }) {
-  const handleComplete = () => {
-    completeTask(taskID);
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  const handleCheckPress = () => {
+    // slide out after a little delay
+    Animated.timing(slideAnim, {
+      toValue: 1,
+      duration: 500,
+      delay: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      completeTask(taskID);
+      onComplete && onComplete();
+    });
   };
+
+  const translateX = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -500],
+  });
+
   return (
-    <View className="mb-6">
+    <Animated.View style={{ transform: [{ translateX }] }} className="mb-6">
       {/* Card container with colored bar on left */}
       <View
         className="flex-row h-24 rounded-3xl bg-white border-8 border-[#D2D2D2]"
@@ -42,7 +61,7 @@ export default function TaskCard({
               <TouchableOpacity
                 className="bg-green-500 rounded-full border-2 border-green-600 items-center justify-center ml-2"
                 style={{ width: 44, height: 44 }}
-                onPress={handleComplete}
+                onPress={handleCheckPress}
               >
                 <FontAwesome name="check" size={20} color="black" />
               </TouchableOpacity>
@@ -50,6 +69,6 @@ export default function TaskCard({
           </View>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 }

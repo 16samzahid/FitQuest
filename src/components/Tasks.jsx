@@ -73,6 +73,10 @@ function Tasks() {
           color={getBgForCategory(task.category)}
           text={task.description}
           xp={task.xp}
+          onComplete={() => {
+            // locally remove card immediately while firestore updates
+            setTasks((prev) => prev.filter((t) => t.id !== task.id));
+          }}
         />
       ))}
     </ScrollView>
