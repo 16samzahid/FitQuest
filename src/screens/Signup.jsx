@@ -4,37 +4,33 @@ import { useState } from "react";
 import { Pressable, Text, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { auth } from "../../config/FirebaseConfig";
+import { createParentAndChild } from "../services/userService";
 
 const Signup = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
-  // useEffect(() => {
-  //   if (__DEV__) {
-  //     signInWithEmailAndPassword(
-  //       auth,
-  //       "sam.zahid6676@gmail.com",
-  //       "zahid123",
-  //     ).catch(() => {});
-  //   }
-  // }, []);
 
   const signUp = async () => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
+      console.log("User created:", userCredential.user);
+      const user = userCredential.user;
+      const parentID = user.uid;
+      createParentAndChild(parentID);
     } catch (err) {
       setError(err.message);
     }
     console.log("Sign up attempted with email:", email);
+    // create a new parent and child document in firestore
   };
 
   const login = async () => {
-    // try {
-    //   await signInWithEmailAndPassword(auth, email, password);
-    // } catch (err) {
-    //   setError(err.message);
-    // }
     navigation.replace("Login");
   };
 

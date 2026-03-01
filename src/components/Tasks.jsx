@@ -81,6 +81,7 @@ function Tasks() {
         <ConfettiCannon
           count={80}
           origin={{ x: width / 2, y: 0 }}
+          // more speed means slower falling confetti, less speed means faster confetti
           explosionSpeed={1000}
           fallSpeed={1500}
           fadeOut

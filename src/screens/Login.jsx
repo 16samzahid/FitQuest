@@ -10,15 +10,6 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
-  // useEffect(() => {
-  //   if (__DEV__) {
-  //     signInWithEmailAndPassword(
-  //       auth,
-  //       "sam.zahid6676@gmail.com",
-  //       "zahid123",
-  //     ).catch(() => {});
-  //   }
-  // }, []);
 
   const signIn = async () => {
     try {

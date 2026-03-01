@@ -1,9 +1,9 @@
 import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  updateDoc,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    updateDoc,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
@@ -17,6 +17,11 @@ const Shop = () => {
   const [accessories, setAccessories] = useState([]);
 
   const changeColour = (colourId) => async () => {
+    if (!child) {
+      console.warn("changeColour called with no child");
+      return;
+    }
+
     // console.log("Changing colour to ID:", colourId);
 
     // Fetch the imageURL for this colour from Firestore

@@ -1,3 +1,4 @@
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { Text, View } from "react-native";
 
 export default function LevelCoinSection({
@@ -27,7 +28,7 @@ export default function LevelCoinSection({
 
       {/* Coins */}
       <View className="ml-3 items-center">
-        <Text className="text-yellow-500 text-3xl">🪙</Text>
+        <FontAwesome5 name="coins" size={35} color="#FBBF24" />
         <Text className="text-lg text-indigo-700 font-bold">{coins}</Text>
       </View>
     </View>
