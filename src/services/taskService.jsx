@@ -31,3 +31,19 @@ export const deleteTask = async (taskId) => {
   console.log(`Task ${taskId} deleted`);
   await deleteDoc(doc(db, "Task", taskId));
 };
+
+export const completeTask = async (taskId) => {
+  try {
+    console.log(`Task ${taskId} completed`);
+
+    const taskRef = doc(db, "Task", taskId);
+
+    await updateDoc(taskRef, {
+      status: "pending",
+    });
+
+    console.log("Task set to pending successfully");
+  } catch (error) {
+    console.error("Error completing task:", error);
+  }
+};

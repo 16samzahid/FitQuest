@@ -69,6 +69,7 @@ function Tasks() {
       {tasks.map((task) => (
         <TaskCard
           key={task.id}
+          taskID={task.id}
           color={getBgForCategory(task.category)}
           text={task.description}
           xp={task.xp}

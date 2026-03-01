@@ -1,10 +1,16 @@
-import { Text, View } from "react-native";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Text, TouchableOpacity, View } from "react-native";
+import { completeTask } from "../services/taskService";
 
 export default function TaskCard({
+  taskID = "undefined",
   color = "bg-red-500",
   text = "Task Name",
   xp = 10,
 }) {
+  const handleComplete = () => {
+    completeTask(taskID);
+  };
   return (
     <View className="mb-6">
       {/* Card container with colored bar on left */}
@@ -22,13 +28,25 @@ export default function TaskCard({
         {/* Colored left bar */}
         <View className={`w-16 ${color} rounded-l-3xl`} />
 
-        {/* Empty content area */}
-        <View className="flex-1">
-          <Text className="text-lg font-semibold p-4 align-middle justify-center">
-            {text}
-          </Text>
-          <View className="absolute bottom-4 right-4 rounded-full bg-lightGray px-3 py-1 border-2 border-gray-200 shadow-sm">
-            <Text className="text-sm font-bold">{xp} XP</Text>
+        {/* Content area with spaced text and controls */}
+        <View className="flex-1 px-4 py-4">
+          <View className="flex-row items-center justify-between">
+            {/* Task title */}
+            <Text className="text-lg font-semibold">{text}</Text>
+
+            {/* Right side controls */}
+            <View className="flex-row items-center space-x-3">
+              <View className="rounded-full bg-lightGray px-3 py-1 border-2 border-gray-200 shadow-sm">
+                <Text className="text-sm font-bold">{xp} XP</Text>
+              </View>
+              <TouchableOpacity
+                className="bg-green-500 rounded-full border-2 border-green-600 items-center justify-center ml-2"
+                style={{ width: 44, height: 44 }}
+                onPress={handleComplete}
+              >
+                <FontAwesome name="check" size={20} color="black" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
