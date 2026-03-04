@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from "react-native";
+import React, { useRef } from "react";
+import { Animated, Pressable, Text, View } from "react-native";
 import { approveTask, rejectTask } from "../services/taskService";
 
 export default function ApproveTaskCard({
@@ -6,14 +7,32 @@ export default function ApproveTaskCard({
   xp = 10,
   taskID,
 }) {
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  const animateAndCall = (callback) => {
+    Animated.timing(slideAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => {
+      callback();
+    });
+  };
+
   const handleReject = () => {
-    rejectTask(taskID);
+    animateAndCall(() => rejectTask(taskID));
   };
   const handleConfirm = () => {
-    approveTask(taskID);
+    animateAndCall(() => approveTask(taskID));
   };
+
+  const translateX = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -500],
+  });
+
   return (
-    <View className="mb-6">
+    <Animated.View style={{ transform: [{ translateX }] }} className="mb-6">
       <View
         className="flex-row items-center justify-between px-3 h-[55px] rounded-[20px] bg-[#E6E5FF]"
         style={{
@@ -48,6 +67,6 @@ export default function ApproveTaskCard({
           </Pressable>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 }
