@@ -1,9 +1,10 @@
 import { useAppData } from "@/src/context/AppDataContext";
 import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AddTaskModal from "../../components/addTaskModal";
+import AddTaskModal from "../../components/AddTaskModal";
+import TasksSection from "../../components/TasksSection";
 import { createTask } from "../../services/taskService";
 
 const ManageTasks = () => {
@@ -44,16 +45,19 @@ const ManageTasks = () => {
     }
   };
   return (
-    <SafeAreaView className="flex-1">
-      <View className="flex-1 px-4">
+    <SafeAreaView className="flex-1 bg-[#D9D8FF]">
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16 }}
+        showsVerticalScrollIndicator={false}
+      >
         <Text className="text-[#7F7DCE] text-[30px] font-black p-2 text-center">
           Manage Tasks
         </Text>
         <Pressable
-          className="mt-4 bg-indigo-600 py-3 rounded-full items-center"
+          className="mt-4 mb-4 bg-indigo-600 py-3 rounded-full items-center shadow-md border border-[#302ECC]"
           onPress={() => setModalVisible(true)}
         >
-          <Text className="text-white font-semibold">Create New Task</Text>
+          <Text className="text-white font-semibold">+ Create New Task</Text>
         </Pressable>
 
         <AddTaskModal
@@ -75,22 +79,10 @@ const ManageTasks = () => {
             )
           }
         />
-        <View className="flex-1">
-          <Text className="mt-6 text-black font-bold text-xl">
-            Today&apos;s Tasks
-          </Text>
-        </View>
-        <View className="flex-1">
-          <Text className="mt-6 text-black font-bold text-xl">
-            Pending Tasks
-          </Text>
-        </View>
-        <View className="flex-1">
-          <Text className="mt-6 text-black font-bold text-xl">
-            Repeating Tasks
-          </Text>
-        </View>
-      </View>
+        <TasksSection title="Today's Tasks" />
+        <TasksSection title="Pending Tasks" />
+        <TasksSection title="Repeating Tasks" />
+      </ScrollView>
     </SafeAreaView>
   );
 };

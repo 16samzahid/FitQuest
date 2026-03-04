@@ -10,7 +10,9 @@ const Settings = () => {
   return (
     <SafeAreaView className="flex-1">
       <View className="flex-1 px-4">
-        <Text>Settings</Text>
+        <Text className="text-[#7F7DCE] text-[30px] font-black p-2 text-center">
+          Settings
+        </Text>
         {/* Switch mode button */}
         <Pressable
           onPress={() => setMode("child")}
