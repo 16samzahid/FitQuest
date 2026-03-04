@@ -3,6 +3,8 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
+  increment,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../../config/FirebaseConfig";
@@ -41,9 +43,39 @@ export const completeTask = async (taskId) => {
     await updateDoc(taskRef, {
       status: "pending",
     });
-
-    console.log("Task set to pending successfully");
   } catch (error) {
     console.error("Error completing task:", error);
+  }
+};
+
+export const approveTask = async (taskId) => {
+  try {
+    console.log(`Task ${taskId} approved`);
+
+    const taskRef = doc(db, "Task", taskId);
+    await updateDoc(taskRef, {
+      status: "approved",
+    });
+    // update child's xp and coins
+    const taskSnapshot = await getDoc(taskRef);
+    const task = taskSnapshot.data();
+    const childRef = doc(db, "Child", task.childID);
+
+    const childSnapshot = await getDoc(childRef);
+    const child = childSnapshot.data();
+    const totalXP = child.xp + task.xp;
+
+    const levelsGained = Math.floor(totalXP / 100);
+    const remainingXP = totalXP % 100;
+
+    const newLevel = child.level + levelsGained;
+
+    await updateDoc(childRef, {
+      xp: remainingXP,
+      coins: increment(task.coins),
+      level: newLevel,
+    });
+  } catch (error) {
+    console.error("Error approving task:", error);
   }
 };

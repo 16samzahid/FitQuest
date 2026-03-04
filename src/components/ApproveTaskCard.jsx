@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from "react-native";
-import { rejectTask } from "../services/taskService";
+import { approveTask, rejectTask } from "../services/taskService";
 
 export default function ApproveTaskCard({
   text = "Task Name",
@@ -8,6 +8,9 @@ export default function ApproveTaskCard({
 }) {
   const handleReject = () => {
     rejectTask(taskID);
+  };
+  const handleConfirm = () => {
+    approveTask(taskID);
   };
   return (
     <View className="mb-6">
@@ -37,7 +40,10 @@ export default function ApproveTaskCard({
           </Pressable>
 
           {/* Confirm */}
-          <Pressable className="px-5 py-2 rounded-full bg-indigo-600 shadow-md active:opacity-80 border border-[#302ECC]">
+          <Pressable
+            className="px-5 py-2 rounded-full bg-indigo-600 shadow-md active:opacity-80 border border-[#302ECC]"
+            onPress={handleConfirm}
+          >
             <Text className="text-white font-semibold text-md">Confirm</Text>
           </Pressable>
         </View>
