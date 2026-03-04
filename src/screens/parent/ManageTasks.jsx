@@ -46,7 +46,9 @@ const ManageTasks = () => {
   return (
     <SafeAreaView className="flex-1">
       <View className="flex-1 px-4">
-        <Text>ManageTasks</Text>
+        <Text className="text-[#7F7DCE] text-[30px] font-black p-2 text-center">
+          Manage Tasks
+        </Text>
         <Pressable
           className="mt-4 bg-indigo-600 py-3 rounded-full items-center"
           onPress={() => setModalVisible(true)}
@@ -73,6 +75,21 @@ const ManageTasks = () => {
             )
           }
         />
+        <View className="flex-1">
+          <Text className="mt-6 text-black font-bold text-xl">
+            Today&apos;s Tasks
+          </Text>
+        </View>
+        <View className="flex-1">
+          <Text className="mt-6 text-black font-bold text-xl">
+            Pending Tasks
+          </Text>
+        </View>
+        <View className="flex-1">
+          <Text className="mt-6 text-black font-bold text-xl">
+            Repeating Tasks
+          </Text>
+        </View>
       </View>
     </SafeAreaView>
   );
