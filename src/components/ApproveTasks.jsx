@@ -12,6 +12,12 @@ export default function ApproveTasks() {
   const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
+    if (!child) {
+      // wait for child to be loaded before running query
+      setTasks([]);
+      return;
+    }
+
     const q = query(
       collection(db, "Task"),
       where("childID", "==", child.id),

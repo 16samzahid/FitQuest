@@ -9,6 +9,7 @@ import "./src/global.css";
 import Navigator from "./src/navigation/Navigator";
 import Login from "./src/screens/Login";
 import Signup from "./src/screens/Signup";
+import Welcome from "./src/screens/Welcome";
 
 const AuthStack = createNativeStackNavigator();
 
@@ -29,6 +30,7 @@ const AppContent = () => {
         <AuthStack.Navigator screenOptions={{ headerShown: false }}>
           <AuthStack.Screen name="Login" component={Login} />
           <AuthStack.Screen name="Signup" component={Signup} />
+          <AuthStack.Screen name="Welcome" component={Welcome} />
         </AuthStack.Navigator>
       )}
     </NavigationContainer>

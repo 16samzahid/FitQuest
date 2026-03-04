@@ -57,6 +57,7 @@ export default function PinModal({ visible, onClose, onSuccess }) {
       setPin(["", "", "", ""]);
       inputs.current[0].focus();
     }
+    console.log("Entered PIN:", enteredPin, "Correct PIN:", CORRECT_PIN);
   };
 
   return (

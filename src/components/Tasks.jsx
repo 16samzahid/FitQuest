@@ -1,13 +1,27 @@
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { ScrollView, Text } from "react-native";
+import { Dimensions, ScrollView, Text, View } from "react-native";
+import ConfettiCannon from "react-native-confetti-cannon";
 import { db } from "../../config/FirebaseConfig";
 import { useAppData } from "../context/AppDataContext";
 import TaskCard from "./TaskCard";
+const { width } = Dimensions.get("window");
 
 function Tasks() {
   const { child, loading } = useAppData();
   const [tasks, setTasks] = useState([]);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const triggerCelebration = (taskID) => {
+    // remove task instantly
+    setTasks((prev) => prev.filter((t) => t.id !== taskID));
+
+    // show confetti
+    setShowConfetti(true);
+
+    setTimeout(() => {
+      setShowConfetti(false);
+    }, 2500);
+  };
 
   // 🔗 category → stat (MATCH FIRESTORE CASE)
   const categoryToStat = {
@@ -62,19 +76,34 @@ function Tasks() {
   }
 
   return (
-    <ScrollView
-      className="mt-6 space-y-4 rounded-t-3xl px-3 shadow-md bg-white p-5"
-      showsVerticalScrollIndicator={false}
-    >
-      {tasks.map((task) => (
-        <TaskCard
-          key={task.id}
-          color={getBgForCategory(task.category)}
-          text={task.description}
-          xp={task.xp}
+    <View style={{ flex: 1 }}>
+      {showConfetti && (
+        <ConfettiCannon
+          count={80}
+          origin={{ x: width / 2, y: 0 }}
+          // more speed means slower falling confetti, less speed means faster confetti
+          explosionSpeed={1000}
+          fallSpeed={1500}
+          fadeOut
         />
-      ))}
-    </ScrollView>
+      )}
+
+      <ScrollView
+        className="mt-6 space-y-4 rounded-t-3xl px-3 shadow-md bg-white p-5"
+        showsVerticalScrollIndicator={false}
+      >
+        {tasks.map((task) => (
+          <TaskCard
+            key={task.id}
+            taskID={task.id}
+            color={getBgForCategory(task.category)}
+            text={task.description}
+            xp={task.xp}
+            onComplete={triggerCelebration}
+          />
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
