@@ -10,7 +10,12 @@ const ManageTasks = () => {
   const { child } = useAppData();
   const [modalVisible, setModalVisible] = useState(false);
 
-  const handleCreateTask = async (description, approvalNeeded, category) => {
+  const handleCreateTask = async (
+    description,
+    approvalNeeded,
+    category,
+    coins,
+  ) => {
     if (!child) {
       alert("No child selected");
       alert("Please select a child before creating a task");
@@ -22,7 +27,7 @@ const ManageTasks = () => {
         approvedBy: null,
         category: category,
         childID: child.id,
-        coins: 10,
+        coins: Number(coins),
         completedAt: null,
         createdAt: new Date(),
         description: description,
@@ -50,8 +55,8 @@ const ManageTasks = () => {
         <AddTaskModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
-          onCreate={({ description, approvalNeeded, category }) =>
-            handleCreateTask(description, approvalNeeded, category)
+          onCreate={({ description, approvalNeeded, category, coins }) =>
+            handleCreateTask(description, approvalNeeded, category, coins)
           }
         />
       </View>
