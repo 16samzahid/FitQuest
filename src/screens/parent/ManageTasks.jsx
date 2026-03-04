@@ -1,4 +1,5 @@
 import { useAppData } from "@/src/context/AppDataContext";
+import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,6 +16,7 @@ const ManageTasks = () => {
     approvalNeeded,
     category,
     coins,
+    dueDate,
   ) => {
     if (!child) {
       alert("No child selected");
@@ -29,9 +31,9 @@ const ManageTasks = () => {
         childID: child.id,
         coins: Number(coins),
         completedAt: null,
-        createdAt: new Date(),
+        createdAt: Timestamp.now(),
         description: description,
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Due in 7 days
+        dueDate: dueDate ? Timestamp.fromDate(dueDate) : null,
         recurrence: null,
         status: "notdone",
         xp: 10,
@@ -55,8 +57,20 @@ const ManageTasks = () => {
         <AddTaskModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
-          onCreate={({ description, approvalNeeded, category, coins }) =>
-            handleCreateTask(description, approvalNeeded, category, coins)
+          onCreate={({
+            description,
+            approvalNeeded,
+            category,
+            coins,
+            dueDate,
+          }) =>
+            handleCreateTask(
+              description,
+              approvalNeeded,
+              category,
+              coins,
+              dueDate,
+            )
           }
         />
       </View>

@@ -1,3 +1,4 @@
+import DateTimePicker from "@react-native-community/datetimepicker";
 import Checkbox from "expo-checkbox";
 import { useState } from "react";
 import { Modal, Pressable, Text, TextInput, View } from "react-native";
@@ -8,6 +9,9 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
   const [approvalNeeded, setApprovalNeeded] = useState(true);
   const [category, setCategory] = useState(null);
   const [coins, setCoins] = useState("");
+  const [dueDate, setDueDate] = useState(null);
+  const [showPicker, setShowPicker] = useState(false);
+
   const categories = [
     { label: "Exercise", value: "Exercise" },
     { label: "Learning", value: "Learning" },
@@ -17,23 +21,26 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
   ];
 
   const handleChange = (text) => {
-    // Allow only numbers
     const numericValue = text.replace(/[^0-9]/g, "");
     setCoins(numericValue);
   };
 
   const handleCreate = () => {
     if (!description.trim()) return;
+
     onCreate({
       description: description.trim(),
       approvalNeeded,
       category,
-      coins,
+      coins: Number(coins),
+      dueDate: dueDate || null,
     });
+
     setDescription("");
     setApprovalNeeded(true);
     setCategory(null);
-    setCoins(0);
+    setCoins("");
+    setDueDate(null);
   };
 
   return (
@@ -43,6 +50,8 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
           <Text className="text-xl font-bold text-[#150F59] mb-2">
             Create Task
           </Text>
+
+          {/* Description */}
           <TextInput
             value={description}
             onChangeText={setDescription}
@@ -51,7 +60,8 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
             placeholderTextColor="#9CA3AF"
             className="border border-gray-200 rounded-lg p-3 mb-4 text-lg"
           />
-          {/* Category Dropdown */}
+
+          {/* Category */}
           <Dropdown
             data={categories}
             labelField="label"
@@ -72,6 +82,8 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
             selectedTextStyle={{ color: "#111827", fontSize: 16 }}
             inputSearchStyle={{ color: "#111827", fontSize: 16 }}
           />
+
+          {/* Coins */}
           <TextInput
             value={coins}
             onChangeText={handleChange}
@@ -80,8 +92,33 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
             keyboardType="numeric"
             className="border border-gray-200 rounded-lg p-3 mb-4 text-lg"
           />
+
+          {/* Due Date */}
+          <Pressable
+            onPress={() => setShowPicker(true)}
+            className="border border-gray-200 rounded-lg p-3 mb-4"
+          >
+            <Text className="text-lg">
+              {dueDate
+                ? `Due: ${dueDate.toDateString()}`
+                : "Select Due Date (Optional)"}
+            </Text>
+          </Pressable>
+
+          {showPicker && (
+            <DateTimePicker
+              value={dueDate || new Date()}
+              mode="date"
+              display="default"
+              onChange={(event, selectedDate) => {
+                setShowPicker(false);
+                if (selectedDate) setDueDate(selectedDate);
+              }}
+            />
+          )}
+
           {/* Approval Checkbox */}
-          <View className="flex-row justify-end mb-4">
+          <View className="flex-row justify-end mb-4 items-center">
             <Text className="mr-3 text-gray-700 text-lg">
               Requires Parent Approval
             </Text>
@@ -92,12 +129,14 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
             />
           </View>
 
+          {/* Buttons */}
           <View className="flex-row justify-end space-x-3">
             <Pressable
               className="px-4 py-2 rounded-full bg-gray-200 mr-2"
               onPress={() => {
                 setDescription("");
-                setCoins(0);
+                setCoins("");
+                setDueDate(null);
                 onClose();
               }}
             >
