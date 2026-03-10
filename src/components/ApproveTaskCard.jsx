@@ -60,7 +60,7 @@ export default function ApproveTaskCard({
 
           {/* Confirm */}
           <Pressable
-            className="px-5 py-2 rounded-full bg-indigo-600 shadow-md active:opacity-80 border border-[#302ECC]"
+            className="px-5 py-2 rounded-full bg-[#4F46E5] shadow-md active:opacity-80 border border-[#302ECC]"
             onPress={handleConfirm}
           >
             <Text className="text-white font-semibold text-md">Confirm</Text>

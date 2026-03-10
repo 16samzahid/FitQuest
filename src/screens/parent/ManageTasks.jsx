@@ -54,7 +54,7 @@ const ManageTasks = () => {
           Manage Tasks
         </Text>
         <Pressable
-          className="mt-4 mb-4 bg-indigo-600 py-3 rounded-full items-center shadow-md border border-[#302ECC]"
+          className="mt-4 mb-4 bg-[#302ECC] py-3 rounded-full items-center shadow-md border border-[#302ECC]"
           onPress={() => setModalVisible(true)}
         >
           <Text className="text-white font-semibold">+ Create New Task</Text>
