@@ -8,7 +8,7 @@ import { useMode } from "../../context/ModeContext";
 const Settings = () => {
   const { setMode } = useMode();
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView className="flex-1" edges={["top"]}>
       <View className="flex-1 px-4">
         <Text className="text-[#7F7DCE] text-[30px] font-black p-2 text-center">
           Settings

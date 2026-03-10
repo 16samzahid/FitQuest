@@ -45,7 +45,7 @@ const ManageTasks = () => {
     }
   };
   return (
-    <SafeAreaView className="flex-1 bg-[#D9D8FF]">
+    <SafeAreaView className="flex-1 bg-[#D9D8FF]" edges={["top"]}>
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16 }}
         showsVerticalScrollIndicator={false}
@@ -80,7 +80,7 @@ const ManageTasks = () => {
           }
         />
         <TasksSection title="Today's Tasks" />
-        <TasksSection title="Pending Tasks" />
+        <TasksSection title="Upcoming Tasks" />
         <TasksSection title="Repeating Tasks" />
       </ScrollView>
     </SafeAreaView>

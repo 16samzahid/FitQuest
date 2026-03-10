@@ -14,7 +14,7 @@ export default function ChildHome() {
   const { child, loading, pet } = useAppData();
   const [showPin, setShowPin] = useState(false);
   return (
-    <SafeAreaView className="flex-1 px-4 pt-4">
+    <SafeAreaView className="flex-1 px-4 pt-4" edges={["top"]}>
       {/* Switch button */}
       <Pressable
         className="mt-4"
