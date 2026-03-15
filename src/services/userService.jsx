@@ -26,6 +26,7 @@ export const createParentAndChild = async (parentID) => {
         colourID: "red_id",
         imageURL:
           "https://firebasestorage.googleapis.com/v0/b/fitquest-c9d82.firebasestorage.app/o/bodies%2Fred.png?alt=media&token=75d0adc9-945d-400f-8a57-f160c0dd6d46",
+        mood: "happy",
       },
       xp: 0,
     });

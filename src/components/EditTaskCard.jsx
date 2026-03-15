@@ -4,6 +4,8 @@ import { Pressable, Text, View } from "react-native";
 export default function EditTaskCard({
   text = "Task Name",
   title = "Task Title",
+  dueDate = null,
+  recurrence = null,
 }) {
   return (
     <View
