@@ -7,7 +7,13 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { db } from "../../config/FirebaseConfig";
 import { useAuth } from "./AuthContext";
 
@@ -20,9 +26,10 @@ export function AppDataProvider({ children }) {
   const [child, setChild] = useState(null);
   const [pet, setPet] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [childAccessories, setAccessories] = useState([]);
 
   // fetchData is still useful for initial load/refresh, but child is now real-time
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
@@ -66,6 +73,7 @@ export function AppDataProvider({ children }) {
               imageURL = colourSnap.data().imageURL;
             }
           }
+          // initialising moodURL here as well since it's needed for the Avatar
           let moodImageURL = null;
           if (petData.mood) {
             const moodSnap = await getDoc(doc(db, "Mood", petData.mood));
@@ -75,13 +83,22 @@ export function AppDataProvider({ children }) {
           }
           setPet({ ...petData, imageURL, moodImageURL });
         }
+        // fetch accessories for shop
+        const accessoryQuery = query(
+          collection(db, "ChildAccessory"),
+          where("childID", "==", childData.id),
+        );
+        const accessorySnap = await getDocs(accessoryQuery);
+        setAccessories(
+          accessorySnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+        );
       }
     } catch (err) {
       console.error("AppData fetch error:", err);
     }
 
     setLoading(false);
-  };
+  }, [user]);
 
   // 🔑 rerun when user changes
   useEffect(() => {
@@ -92,7 +109,6 @@ export function AppDataProvider({ children }) {
     // update state to the first matching child.
     let unsubscribeChild = null;
     if (user) {
-      const parentDocRef = doc(db, "Parent", user.uid);
       // we'll listen on Child collection and filter by parentID
       const q = query(
         collection(db, "Child"),
@@ -112,7 +128,7 @@ export function AppDataProvider({ children }) {
     return () => {
       unsubscribeChild && unsubscribeChild();
     };
-  }, [user]);
+  }, [user, fetchData]);
 
   // 🔍 correct way to log state changes
   useEffect(() => {
@@ -152,6 +168,27 @@ export function AppDataProvider({ children }) {
     loadPetResources();
   }, [child]);
 
+  // Real-time accessory listener for current child
+  useEffect(() => {
+    if (!child?.id) {
+      setAccessories([]);
+      return;
+    }
+
+    const accessoryQuery = query(
+      collection(db, "ChildAccessory"),
+      where("childID", "==", child.id),
+    );
+
+    const unsubscribeAccessories = onSnapshot(accessoryQuery, (snapshot) => {
+      setAccessories(
+        snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+      );
+    });
+
+    return () => unsubscribeAccessories();
+  }, [child?.id]);
+
   return (
     <AppDataContext.Provider
       value={{
@@ -161,6 +198,7 @@ export function AppDataProvider({ children }) {
         pet,
         setPet,
         loading,
+        childAccessories,
         refreshData: fetchData,
       }}
     >
