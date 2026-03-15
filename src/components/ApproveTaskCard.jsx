@@ -1,3 +1,4 @@
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useRef } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
 import { approveTask, rejectTask } from "../services/taskService";
@@ -22,6 +23,7 @@ export default function ApproveTaskCard({
   const handleReject = () => {
     animateAndCall(() => rejectTask(taskID));
   };
+
   const handleConfirm = () => {
     animateAndCall(() => approveTask(taskID));
   };
@@ -32,38 +34,47 @@ export default function ApproveTaskCard({
   });
 
   return (
-    <Animated.View style={{ transform: [{ translateX }] }} className="mb-6">
+    <Animated.View style={{ transform: [{ translateX }] }}>
       <View
-        className="flex-row items-center justify-between px-3 h-[55px] rounded-[20px] bg-[#E6E5FF]"
+        className="flex-row items-center justify-between px-5 py-4 rounded-[24px] bg-[#ECEBFF] mb-4"
         style={{
           shadowColor: "#000",
-          shadowOffset: { width: 3, height: 6 },
-          shadowOpacity: 0.5,
-          shadowRadius: 4,
-          elevation: 6,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 6,
+          elevation: 5,
         }}
       >
+        {/* Accent bar */}
+        <View className="absolute left-0 h-[70%] w-[6px] bg-[#4F46E5] rounded-r-full" />
+
         {/* Left Side */}
-        <View>
-          <Text className="text-[#22198E] text-lg font-bold">{text}</Text>
+        <View className="ml-3">
+          <Text className="text-[#1E1B8F] text-[16px] font-semibold">
+            {text}
+          </Text>
+
+          <Text className="text-[#7F7DCE] text-[13px] mt-1">
+            Reward: {xp} XP
+          </Text>
         </View>
 
         {/* Right Side Buttons */}
-        <View className="flex-row items-center gap-3">
+        <View className="flex-row gap-2">
           {/* Reject */}
           <Pressable
             onPress={handleReject}
-            className="px-5 py-2 rounded-full bg-[#ED4F4F] shadow-md active:opacity-80 border border-[#CC2E2E]"
+            className="w-10 h-10 rounded-full bg-[#EF4444] items-center justify-center active:scale-95"
           >
-            <Text className="text-white font-semibold text-md">Reject</Text>
+            <MaterialCommunityIcons name="close" size={20} color="white" />
           </Pressable>
 
           {/* Confirm */}
           <Pressable
-            className="px-5 py-2 rounded-full bg-[#4F46E5] shadow-md active:opacity-80 border border-[#302ECC]"
             onPress={handleConfirm}
+            className="w-10 h-10 rounded-full bg-[#4F46E5] items-center justify-center active:scale-95"
           >
-            <Text className="text-white font-semibold text-md">Confirm</Text>
+            <MaterialCommunityIcons name="check" size={20} color="white" />
           </Pressable>
         </View>
       </View>

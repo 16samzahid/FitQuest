@@ -9,19 +9,19 @@ export default function LevelCoinSection({
   return (
     <View className="flex-row items-center mt-5 shadow-md bg-white rounded-3xl p-4">
       {/* Level circle */}
-      <View className="w-16 h-16 rounded-full border-4 border-indigo-700 items-center justify-center">
-        <Text className="text-indigo-700 font-semibold">Lvl {level}</Text>
+      <View className="w-16 h-16 rounded-full border-4 border-indigo items-center justify-center">
+        <Text className="text-indigo font-semibold">Lvl {level}</Text>
       </View>
 
       {/* Progress bar */}
-      <View className="flex-1 ml-4 bg-#EBEBEB">
+      <View className="flex-1 ml-4">
         <View className="h-6 bg-gray-300 rounded-full overflow-hidden">
           <View
-            className="h-full bg-indigo-700"
+            className="h-full bg-indigo"
             style={{ width: `${progress}%` }}
           />
         </View>
-        <Text className="text-lg mt-1 text-indigo-700 font-bold">
+        <Text className="text-lg mt-1 text-indigo font-bold">
           {progress} / 100
         </Text>
       </View>
