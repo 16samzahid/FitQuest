@@ -59,10 +59,6 @@ const Shop = () => {
           ),
         );
       }
-
-      if (refreshData) {
-        await refreshData();
-      }
     } catch (error) {
       console.error("Accessory action failed:", error);
     }
