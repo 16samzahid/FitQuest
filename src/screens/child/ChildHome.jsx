@@ -11,7 +11,7 @@ import { useMode } from "../../context/ModeContext";
 
 export default function ChildHome() {
   const { setMode } = useMode();
-  const { child, loading, pet } = useAppData();
+  const { child, loading } = useAppData();
   const [showPin, setShowPin] = useState(false);
   return (
     <SafeAreaView className="flex-1 px-4 pt-4" edges={["top"]}>

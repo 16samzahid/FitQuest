@@ -99,9 +99,7 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
             className="border border-gray-200 rounded-lg p-3 mb-4"
           >
             <Text className="text-lg">
-              {dueDate
-                ? `Due: ${dueDate.toDateString()}`
-                : "Select Due Date (Optional)"}
+              {dueDate ? `Due: ${dueDate.toDateString()}` : "Select Due Date"}
             </Text>
           </Pressable>
 
@@ -112,7 +110,9 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
               display="default"
               onChange={(event, selectedDate) => {
                 setShowPicker(false);
-                if (selectedDate) setDueDate(selectedDate);
+
+                // if user didn't change the date, use today's date
+                setDueDate(selectedDate || dueDate || new Date());
               }}
             />
           )}
