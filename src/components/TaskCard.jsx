@@ -61,11 +61,11 @@ export default function TaskCard({
                   <Text className="text-sm font-bold">{xp} XP</Text>
                 </View>
                 <TouchableOpacity
-                  className="bg-green-500 rounded-full border-2 border-green-600 items-center justify-center ml-2"
+                  className="bg-green rounded-full border-2 border-green items-center justify-center ml-2 shadow-sm"
                   style={{ width: 44, height: 44 }}
                   onPress={handleCheckPress}
                 >
-                  <FontAwesome name="check" size={20} color="black" />
+                  <FontAwesome name="check" size={20} color="white" />
                 </TouchableOpacity>
               </View>
             </View>

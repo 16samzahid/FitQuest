@@ -95,7 +95,12 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
 
           {/* Due Date */}
           <Pressable
-            onPress={() => setShowPicker(true)}
+            onPress={() => {
+              if (!dueDate) {
+                setDueDate(new Date());
+              }
+              setShowPicker(true);
+            }}
             className="border border-gray-200 rounded-lg p-3 mb-4"
           >
             <Text className="text-lg">

@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   increment,
+  Timestamp,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../../config/FirebaseConfig";
@@ -55,6 +56,7 @@ export const approveTask = async (taskId) => {
     const taskRef = doc(db, "Task", taskId);
     await updateDoc(taskRef, {
       status: "approved",
+      completedAt: Timestamp.now(),
     });
     // update child's xp and coins
     const taskSnapshot = await getDoc(taskRef);

@@ -28,9 +28,9 @@ export default function EditTaskCard({
         {title !== "Today's Tasks" && (
           <Text className="text-[#7F7DCE] text-[13px] mt-1">
             {title === "Upcoming Tasks"
-              ? "Due:"
+              ? `Due: ${dueDate}`
               : title === "Repeating Tasks"
-                ? "Every"
+                ? `Every ${recurrence}`
                 : ""}
           </Text>
         )}
