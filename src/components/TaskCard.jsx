@@ -57,7 +57,7 @@ export default function TaskCard({
 
               {/* Right side controls */}
               <View className="flex-row items-center space-x-3">
-                <View className="rounded-full bg-lightGray px-3 py-1 border-2 border-gray-200 shadow-sm">
+                <View className="rounded-full bg-white px-3 py-1 border-4 border-lightGray shadow-sm">
                   <Text className="text-sm font-bold">{xp} XP</Text>
                 </View>
                 <TouchableOpacity

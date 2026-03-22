@@ -25,12 +25,12 @@ export default function Avatar({ width = 300, height = 300 }) {
 
     fetchAccessories();
   }, []);
-  console.log(
-    "Rendering Avatar with pet:",
-    pet,
-    "and accessories:",
-    childAccessories,
-  );
+  // console.log(
+  //   "Rendering Avatar with pet:",
+  //   pet,
+  //   "and accessories:",
+  //   childAccessories,
+  // );
 
   if (loading) {
     return <ActivityIndicator size="large" />;

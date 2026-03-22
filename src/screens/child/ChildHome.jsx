@@ -6,6 +6,7 @@ import Avatar from "../../components/Avatar";
 import PetStatsCard from "../../components/PetStatsCard";
 import PinModal from "../../components/PinModal";
 import Tasks from "../../components/Tasks";
+import TasksCompleted from "../../components/TasksCompleted";
 import { useAppData } from "../../context/AppDataContext";
 import { useMode } from "../../context/ModeContext";
 
@@ -59,6 +60,7 @@ export default function ChildHome() {
         happiness={child?.happiness ?? 0}
         loading={loading}
       />
+      <TasksCompleted />
 
       {/* Tasks / Cards */}
       <Tasks />

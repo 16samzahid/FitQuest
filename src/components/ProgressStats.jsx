@@ -52,7 +52,7 @@ export default function ProgressStats() {
   }, [child]);
 
   const stats = useMemo(() => {
-    const completed = tasks.filter((t) => t.status && t.status !== "notdone");
+    const completed = tasks.filter((t) => t.status && t.status === "approved");
 
     const notCompleted = tasks.filter(
       (t) => !t.status || t.status === "notdone",
@@ -84,10 +84,10 @@ export default function ProgressStats() {
       }
 
       // DEBUG LOGS
-      console.log("completedAt raw:", task.completedAt);
-      console.log("converted date:", date);
-      console.log("weekStart:", weekStart);
-      console.log("weekEnd:", weekEnd);
+      // console.log("completedAt raw:", task.completedAt);
+      // console.log("converted date:", date);
+      // console.log("weekStart:", weekStart);
+      // console.log("weekEnd:", weekEnd);
 
       if (!dateInRange(date, weekStart, weekEnd)) {
         console.log("OUTSIDE WEEK RANGE");
@@ -126,15 +126,6 @@ export default function ProgressStats() {
         label,
         frontColor: "#302ECC",
       })),
-      // barData: [
-      //   { value: 0, label: "Mon", frontColor: "#302ECC" },
-      //   { value: 0, label: "Tue", frontColor: "#302ECC" },
-      //   { value: 0, label: "Wed", frontColor: "#302ECC" },
-      //   { value: 0, label: "Thu", frontColor: "#302ECC" },
-      //   { value: 0, label: "Fri", frontColor: "#302ECC" },
-      //   { value: 3, label: "Sat", frontColor: "#302ECC" },
-      //   { value: 0, label: "Sun", frontColor: "#302ECC" },
-      // ],
     };
   }, [tasks]);
 
