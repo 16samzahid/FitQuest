@@ -24,7 +24,7 @@ export default function TasksSection({ title }) {
   const isNotDone = (task) => task.status === "notdone";
 
   const isRecurring = (task) => {
-    return task.recurrence !== null;
+    return task.recurrence !== null && task.recurrence !== "";
   };
 
   const tasksForSection = (title) => {
@@ -74,7 +74,13 @@ export default function TasksSection({ title }) {
       <Text className="text-black font-bold text-xl">{title}</Text>
       <ScrollView className="mt-3 flex-1 rounded-[20px] bg-white p-4 mb-4 shadow-md">
         {filteredTasks.map((task) => (
-          <EditTaskCard key={task.id} text={task.description} title={title} />
+          <EditTaskCard
+            key={task.id}
+            text={task.description}
+            title={title}
+            dueDate={task.dueDate ? task.dueDate.toDate().toDateString() : null}
+            recurrence={task.recurrence}
+          />
         ))}
       </ScrollView>
     </View>

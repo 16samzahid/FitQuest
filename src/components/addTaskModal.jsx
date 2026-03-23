@@ -9,8 +9,14 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
   const [approvalNeeded, setApprovalNeeded] = useState(true);
   const [category, setCategory] = useState(null);
   const [coins, setCoins] = useState("");
+
+  // due date
   const [dueDate, setDueDate] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
+
+  // recurring
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null);
 
   const categories = [
     { label: "Exercise", value: "Exercise" },
@@ -20,9 +26,29 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
     { label: "Play", value: "Play" },
   ];
 
-  const handleChange = (text) => {
-    const numericValue = text.replace(/[^0-9]/g, "");
-    setCoins(numericValue);
+  const coinOptions = [
+    { label: "5", value: "5" },
+    { label: "10", value: "10" },
+    { label: "15", value: "15" },
+    { label: "20", value: "20" },
+  ];
+
+  const weekdays = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
+  const toggleDay = (index) => {
+    if (selectedDay === index) {
+      setSelectedDay(null);
+    } else {
+      setSelectedDay(index);
+    }
   };
 
   const handleCreate = () => {
@@ -33,14 +59,20 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
       approvalNeeded,
       category,
       coins: Number(coins),
-      dueDate: dueDate || null,
+      // only one of these will be filled
+      dueDate: isRecurring ? null : dueDate,
+      recurrence:
+        isRecurring && selectedDay !== null ? weekdays[selectedDay] : null,
     });
 
+    // reset form
     setDescription("");
     setApprovalNeeded(true);
     setCategory(null);
     setCoins("");
     setDueDate(null);
+    setSelectedDay(null);
+    setIsRecurring(false);
   };
 
   return (
@@ -84,42 +116,114 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
           />
 
           {/* Coins */}
-          <TextInput
+          {/* <TextInput
             value={coins}
-            onChangeText={handleChange}
+            onChangeText={handleCoinsChange}
             placeholder="Coins Reward (Suggested: 10)"
             placeholderTextColor="#9CA3AF"
             keyboardType="numeric"
             className="border border-gray-200 rounded-lg p-3 mb-4 text-lg"
+          /> */}
+          <Dropdown
+            data={coinOptions}
+            labelField="label"
+            valueField="value"
+            placeholder="Coins Reward (Suggested: 10)"
+            value={coins}
+            onChange={(item) => {
+              setCoins(item.value);
+            }}
+            style={{
+              borderColor: "#E5E7EB",
+              borderWidth: 1,
+              borderRadius: 8,
+              padding: 12,
+              marginBottom: 16,
+            }}
+            placeholderStyle={{ color: "#9CA3AF", fontSize: 16 }}
+            selectedTextStyle={{ color: "#111827", fontSize: 16 }}
+            inputSearchStyle={{ color: "#111827", fontSize: 16 }}
           />
 
-          {/* Due Date */}
-          <Pressable
-            onPress={() => {
-              if (!dueDate) {
-                setDueDate(new Date());
-              }
-              setShowPicker(true);
-            }}
-            className="border border-gray-200 rounded-lg p-3 mb-4"
-          >
-            <Text className="text-lg">
-              {dueDate ? `Due: ${dueDate.toDateString()}` : "Select Due Date"}
-            </Text>
-          </Pressable>
+          {/* Repeat Task Checkbox */}
+          <View className="flex-row justify-end mb-4 items-center">
+            <Text className="mr-3 text-gray-700 text-lg">Repeating Task</Text>
 
-          {showPicker && (
-            <DateTimePicker
-              value={dueDate || new Date()}
-              mode="date"
-              display="default"
-              onChange={(event, selectedDate) => {
-                setShowPicker(false);
+            <Checkbox
+              value={isRecurring}
+              onValueChange={(value) => {
+                setIsRecurring(value);
 
-                // if user didn't change the date, use today's date
-                setDueDate(selectedDate || dueDate || new Date());
+                // remove due date if switching to recurring
+                if (value) setDueDate(null);
               }}
+              color={isRecurring ? "#4F46E5" : undefined}
             />
+          </View>
+
+          {/* Weekday selector */}
+          {isRecurring && (
+            <View className="mb-4">
+              <Text className="text-gray-700 mb-2 text-lg">Repeat on:</Text>
+
+              <View className="flex-row flex-wrap">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                  (day, index) => {
+                    const selected = selectedDay === index;
+
+                    return (
+                      <Pressable
+                        key={index}
+                        onPress={() => toggleDay(index)}
+                        className={`px-3 py-2 m-1 rounded-lg border
+                      ${selected ? "bg-indigo-600 border-indigo-600" : "border-gray-300"}`}
+                      >
+                        <Text
+                          className={`${selected ? "text-white" : "text-gray-700"}`}
+                        >
+                          {day}
+                        </Text>
+                      </Pressable>
+                    );
+                  },
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Due Date (only for one-time tasks) */}
+          {!isRecurring && (
+            <>
+              <Pressable
+                onPress={() => {
+                  if (!dueDate) {
+                    setDueDate(new Date());
+                  }
+
+                  setShowPicker(true);
+                }}
+                className="border border-gray-200 rounded-lg p-3 mb-4"
+              >
+                <Text className="text-lg">
+                  {dueDate
+                    ? `Due: ${dueDate.toDateString()}`
+                    : "Select Due Date"}
+                </Text>
+              </Pressable>
+
+              {showPicker && (
+                <DateTimePicker
+                  value={dueDate || new Date()}
+                  mode="date"
+                  display="default"
+                  onChange={(event, selectedDate) => {
+                    setShowPicker(false);
+
+                    setDueDate(selectedDate || dueDate || new Date());
+                  }}
+                />
+              )}
+            </>
           )}
 
           {/* Approval Checkbox */}
@@ -127,6 +231,7 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
             <Text className="mr-3 text-gray-700 text-lg">
               Requires Parent Approval
             </Text>
+
             <Checkbox
               value={approvalNeeded}
               onValueChange={setApprovalNeeded}
@@ -135,13 +240,16 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
           </View>
 
           {/* Buttons */}
-          <View className="flex-row justify-end space-x-3">
+          <View className="flex-row justify-end">
             <Pressable
               className="px-4 py-2 rounded-full bg-gray-200 mr-2"
               onPress={() => {
                 setDescription("");
                 setCoins("");
                 setDueDate(null);
+                setSelectedDay(null);
+                setIsRecurring(false);
+
                 onClose();
               }}
             >
@@ -152,6 +260,7 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
               className="px-4 py-2 rounded-full bg-indigo-600"
               onPress={() => {
                 handleCreate();
+
                 onClose();
               }}
             >

@@ -36,7 +36,7 @@ export default function TaskCard({
       <Animated.View style={{ transform: [{ translateX }] }} className="mb-6">
         {/* Card container with colored bar on left */}
         <View
-          className="flex-row h-24 rounded-3xl bg-white border-8 border-[#D2D2D2]"
+          className="flex-row min-h-24 rounded-3xl bg-white border-8 border-[#D2D2D2]"
           style={{
             shadowColor: "#000",
             shadowOffset: { width: 3, height: 5 },
@@ -51,17 +51,18 @@ export default function TaskCard({
 
           {/* Content area with spaced text and controls */}
           <View className="flex-1 px-4 py-4">
-            <View className="flex-row items-center justify-between">
+            <View className="flex-row items-start justify-between">
               {/* Task title */}
-              <Text className="text-lg font-semibold">{text}</Text>
+              <Text className="flex-1 text-lg font-semibold pr-2">{text}</Text>
 
               {/* Right side controls */}
-              <View className="flex-row items-center space-x-3">
-                <View className="rounded-full bg-white px-3 py-1 border-4 border-lightGray shadow-sm">
+              <View className="flex-row items-center ml-2">
+                <View className="rounded-full bg-white px-3 py-1 border-4 border-lightGray shadow-sm mr-2">
                   <Text className="text-sm font-bold">{xp} XP</Text>
                 </View>
+
                 <TouchableOpacity
-                  className="bg-green rounded-full border-2 border-green items-center justify-center ml-2 shadow-sm"
+                  className="bg-green rounded-full border-2 border-green items-center justify-center shadow-sm"
                   style={{ width: 44, height: 44 }}
                   onPress={handleCheckPress}
                 >

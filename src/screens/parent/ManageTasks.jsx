@@ -18,6 +18,7 @@ const ManageTasks = () => {
     category,
     coins,
     dueDate,
+    recurrence,
   ) => {
     if (!child) {
       alert("No child selected");
@@ -35,7 +36,7 @@ const ManageTasks = () => {
         createdAt: Timestamp.now(),
         description: description,
         dueDate: dueDate ? Timestamp.fromDate(dueDate) : null,
-        recurrence: null,
+        recurrence: recurrence ?? null,
         status: "notdone",
         xp: 10,
       });
@@ -69,6 +70,7 @@ const ManageTasks = () => {
             category,
             coins,
             dueDate,
+            recurrence,
           }) =>
             handleCreateTask(
               description,
@@ -76,6 +78,7 @@ const ManageTasks = () => {
               category,
               coins,
               dueDate,
+              recurrence,
             )
           }
         />
