@@ -126,3 +126,54 @@ export const approveTask = async (taskId) => {
     console.error("Error approving task:", error);
   }
 };
+
+export const editTask = async (taskId, updatedData) => {
+  try {
+    const taskRef = doc(db, "Task", taskId);
+
+    // get existing task
+    const snapshot = await getDoc(taskRef);
+
+    const existingTask = snapshot.data();
+
+    let finalDueDate = existingTask.dueDate;
+
+    // if switching to recurring → calculate new due date
+    if (updatedData.recurrence) {
+      finalDueDate = Timestamp.fromDate(
+        getNextDueDate(updatedData.recurrence, new Date()),
+      );
+    }
+
+    // if editing normal due date
+    else if (updatedData.dueDate !== undefined) {
+      if (updatedData.dueDate) {
+        const jsDate = updatedData.dueDate.toDate
+          ? updatedData.dueDate.toDate()
+          : updatedData.dueDate;
+
+        finalDueDate = Timestamp.fromDate(jsDate);
+      } else {
+        finalDueDate = null;
+      }
+    }
+
+    await updateDoc(taskRef, {
+      description: updatedData.description,
+
+      approvalNeeded: updatedData.approvalNeeded,
+
+      category: updatedData.category,
+
+      coins: updatedData.coins,
+
+      recurrence: updatedData.recurrence || null,
+
+      dueDate: finalDueDate,
+    });
+
+    console.log(`Task ${taskId} updated`);
+  } catch (error) {
+    console.error("Error editing task:", error);
+  }
+};

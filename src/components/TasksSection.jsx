@@ -75,6 +75,7 @@ export default function TasksSection({ title }) {
       <ScrollView className="mt-3 flex-1 rounded-[20px] bg-white p-4 mb-4 shadow-md">
         {filteredTasks.map((task) => (
           <EditTaskCard
+            task={task}
             key={task.id}
             text={task.description}
             title={title}
