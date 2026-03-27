@@ -3,7 +3,7 @@ import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import { Pressable, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AddTaskModal from "../../components/AddTaskModal";
+import AddTaskModal from "../../components/addTaskModal";
 import TasksSection from "../../components/TasksSection";
 import { createTask } from "../../services/taskService";
 
