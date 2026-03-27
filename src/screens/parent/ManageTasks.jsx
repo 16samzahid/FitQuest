@@ -1,15 +1,44 @@
 import { useAppData } from "@/src/context/AppDataContext";
 import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AddTaskModal from "../../components/addTaskModal";
+import AddTaskModal from "../../components/AddTaskModal";
+import TasksSection from "../../components/TasksSection";
 import { createTask } from "../../services/taskService";
 
 const ManageTasks = () => {
   // setting the values to be updated in backend
   const { child } = useAppData();
   const [modalVisible, setModalVisible] = useState(false);
+  const weekdayMap = {
+    Sunday: 0,
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6,
+  };
+
+  const getFirstDueDate = (recurrenceDay) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todayIndex = today.getDay();
+    const targetIndex = weekdayMap[recurrenceDay];
+
+    let diff = targetIndex - todayIndex;
+
+    if (diff < 0) {
+      diff += 7;
+    }
+
+    const dueDate = new Date(today);
+    dueDate.setDate(today.getDate() + diff);
+
+    return dueDate;
+  };
 
   const handleCreateTask = async (
     description,
@@ -17,6 +46,7 @@ const ManageTasks = () => {
     category,
     coins,
     dueDate,
+    recurrence,
   ) => {
     if (!child) {
       alert("No child selected");
@@ -24,6 +54,10 @@ const ManageTasks = () => {
       return;
     }
     try {
+      let finalDueDate = dueDate;
+      if (recurrence) {
+        finalDueDate = getFirstDueDate(recurrence);
+      }
       await createTask({
         approvalNeeded: approvalNeeded,
         approvedBy: null,
@@ -33,8 +67,8 @@ const ManageTasks = () => {
         completedAt: null,
         createdAt: Timestamp.now(),
         description: description,
-        dueDate: dueDate ? Timestamp.fromDate(dueDate) : null,
-        recurrence: null,
+        dueDate: finalDueDate ? Timestamp.fromDate(finalDueDate) : null,
+        recurrence: recurrence ?? null,
         status: "notdone",
         xp: 10,
       });
@@ -44,14 +78,19 @@ const ManageTasks = () => {
     }
   };
   return (
-    <SafeAreaView className="flex-1">
-      <View className="flex-1 px-4">
-        <Text>ManageTasks</Text>
+    <SafeAreaView className="flex-1 bg-[#D9D8FF]" edges={["top"]}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text className="text-[#7F7DCE] text-[30px] font-black p-2 text-center">
+          Manage Tasks
+        </Text>
         <Pressable
-          className="mt-4 bg-indigo-600 py-3 rounded-full items-center"
+          className="mt-4 mb-4 bg-[#302ECC] py-3 rounded-full items-center shadow-md border border-[#302ECC]"
           onPress={() => setModalVisible(true)}
         >
-          <Text className="text-white font-semibold">Create New Task</Text>
+          <Text className="text-white font-semibold">+ Create New Task</Text>
         </Pressable>
 
         <AddTaskModal
@@ -63,6 +102,7 @@ const ManageTasks = () => {
             category,
             coins,
             dueDate,
+            recurrence,
           }) =>
             handleCreateTask(
               description,
@@ -70,10 +110,14 @@ const ManageTasks = () => {
               category,
               coins,
               dueDate,
+              recurrence,
             )
           }
         />
-      </View>
+        <TasksSection title="Today's Tasks" />
+        <TasksSection title="Upcoming Tasks" />
+        <TasksSection title="Repeating Tasks" />
+      </ScrollView>
     </SafeAreaView>
   );
 };

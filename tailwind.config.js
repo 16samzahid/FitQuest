@@ -6,13 +6,15 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        blue: "#393EA6",
+        indigo: "#335a97",
+        blue: "#558bff",
         lightBlue: "#5092AC",
         red: "#FD4545",
         green: "#47A639",
         orange: "#DD742D",
         lightGray: "#A4A4A4",
         yellow: "#fcbb0a",
+        "indigo-600": "#4F46E5",
       },
     },
   },

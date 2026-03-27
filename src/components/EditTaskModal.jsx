@@ -1,22 +1,25 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Checkbox from "expo-checkbox";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, Pressable, Text, TextInput, View } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 
-export default function AddTaskModal({ visible, onClose, onCreate }) {
-  const [description, setDescription] = useState("");
-  const [approvalNeeded, setApprovalNeeded] = useState(true);
-  const [category, setCategory] = useState(null);
-  const [coins, setCoins] = useState("");
+export default function EditTaskModal({ visible, onClose, onEdit, task }) {
+  const [description, setDescription] = useState(task?.description || "");
+  const [approvalNeeded, setApprovalNeeded] = useState(
+    task?.approvalNeeded || true,
+  );
+  const [category, setCategory] = useState(task?.category || null);
+  const [coins, setCoins] = useState(task?.coins ? task.coins.toString() : "");
 
   // due date
-  const [dueDate, setDueDate] = useState(null);
-  const [showPicker, setShowPicker] = useState(false);
+  const [dueDate, setDueDate] = useState(
+    task?.dueDate ? task.dueDate.toDate() : null,
+  );
+  const [showPicker, setShowPicker] = useState(true);
 
   // recurring
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [selectedDay, setSelectedDay] = useState(null);
+  const [isRecurring, setIsRecurring] = useState(!!task?.recurrence);
 
   const categories = [
     { label: "Exercise", value: "Exercise" },
@@ -42,6 +45,26 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
     "Friday",
     "Saturday",
   ];
+  const [selectedDay, setSelectedDay] = useState(
+    task?.recurrence ? weekdays.indexOf(task.recurrence) : null,
+  );
+  useEffect(() => {
+    if (!task) return;
+
+    setDescription(task.description || "");
+
+    setApprovalNeeded(task.approvalNeeded ?? true);
+
+    setCategory(task.category || null);
+
+    setCoins(task.coins ? task.coins.toString() : "");
+
+    setDueDate(task.dueDate ? task.dueDate.toDate() : null);
+
+    setIsRecurring(!!task.recurrence);
+
+    setSelectedDay(task.recurrence ? weekdays.indexOf(task.recurrence) : null);
+  }, [task]);
 
   const toggleDay = (index) => {
     if (selectedDay === index) {
@@ -51,28 +74,32 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
     }
   };
 
-  const handleCreate = () => {
+  const handleEdit = () => {
     if (!description.trim()) return;
 
-    onCreate({
+    onEdit({
       description: description.trim(),
+
       approvalNeeded,
+
       category,
+
       coins: Number(coins),
-      // only one of these will be filled
-      dueDate: isRecurring ? null : dueDate,
+
+      dueDate: isRecurring ? null : (dueDate ?? task?.dueDate?.toDate()),
+
       recurrence:
         isRecurring && selectedDay !== null ? weekdays[selectedDay] : null,
     });
 
     // reset form
-    setDescription("");
-    setApprovalNeeded(true);
-    setCategory(null);
-    setCoins("");
-    setDueDate(null);
-    setSelectedDay(null);
-    setIsRecurring(false);
+    // setDescription("");
+    // setApprovalNeeded(true);
+    // setCategory(null);
+    // setCoins("");
+    // setDueDate(null);
+    // setSelectedDay(null);
+    // setIsRecurring(false);
   };
 
   return (
@@ -116,14 +143,6 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
           />
 
           {/* Coins */}
-          {/* <TextInput
-            value={coins}
-            onChangeText={handleCoinsChange}
-            placeholder="Coins Reward (Suggested: 10)"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
-            className="border border-gray-200 rounded-lg p-3 mb-4 text-lg"
-          /> */}
           <Dropdown
             data={coinOptions}
             labelField="label"
@@ -219,7 +238,10 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
                   onChange={(event, selectedDate) => {
                     setShowPicker(false);
 
-                    setDueDate(selectedDate || dueDate || new Date());
+                    // only update if user actually picked a date
+                    if (selectedDate) {
+                      setDueDate(selectedDate);
+                    }
                   }}
                 />
               )}
@@ -259,12 +281,12 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
             <Pressable
               className="px-4 py-2 rounded-full bg-indigo-600"
               onPress={() => {
-                handleCreate();
+                handleEdit();
 
                 onClose();
               }}
             >
-              <Text className="text-white text-lg">Create Task</Text>
+              <Text className="text-white text-lg">Edit Task</Text>
             </Pressable>
           </View>
         </View>

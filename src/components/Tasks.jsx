@@ -11,6 +11,27 @@ function Tasks() {
   const { child, loading } = useAppData();
   const [tasks, setTasks] = useState([]);
   const [showConfetti, setShowConfetti] = useState(false);
+
+  // return true if the task's dueDate is the same calendar day as today
+  const isDueToday = (task) => {
+    const today = new Date();
+
+    // check exact date match
+    if (task.dueDate) {
+      const due = task.dueDate.toDate();
+
+      const sameExactDate =
+        due.getFullYear() === today.getFullYear() &&
+        due.getMonth() === today.getMonth() &&
+        due.getDate() === today.getDate();
+
+      if (sameExactDate) return true;
+    }
+
+    return false;
+  };
+  const todayTasks = tasks.filter(isDueToday); // only tasks with a due date matching today
+
   const triggerCelebration = (taskID) => {
     // remove task instantly
     setTasks((prev) => prev.filter((t) => t.id !== taskID));
@@ -92,7 +113,7 @@ function Tasks() {
         className="mt-6 space-y-4 rounded-t-3xl px-3 shadow-md bg-white p-5"
         showsVerticalScrollIndicator={false}
       >
-        {tasks.map((task) => (
+        {todayTasks.map((task) => (
           <TaskCard
             key={task.id}
             taskID={task.id}
