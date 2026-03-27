@@ -37,13 +37,6 @@ export default function TasksCompleted() {
             due.getDate() === today.getDate();
           if (sameExactDate) return true;
         }
-
-        // 2️⃣ check recurring weekday match
-        if (task.recurrence) {
-          return task.recurrence === todayName;
-        }
-
-        return false;
       });
 
       setTodayTasks(todayTasksFiltered);

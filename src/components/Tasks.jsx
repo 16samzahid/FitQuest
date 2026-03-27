@@ -16,12 +16,7 @@ function Tasks() {
   const isDueToday = (task) => {
     const today = new Date();
 
-    // get today's weekday name (e.g. "Monday")
-    const todayName = today.toLocaleDateString("en-GB", {
-      weekday: "long",
-    });
-
-    // 1️⃣ check exact date match
+    // check exact date match
     if (task.dueDate) {
       const due = task.dueDate.toDate();
 
@@ -31,12 +26,6 @@ function Tasks() {
         due.getDate() === today.getDate();
 
       if (sameExactDate) return true;
-    }
-
-    // 2️⃣ check recurring weekday match
-    if (task.recurrence) {
-      console.log(task.recurrence, todayName);
-      return task.recurrence === todayName;
     }
 
     return false;
