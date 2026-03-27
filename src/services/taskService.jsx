@@ -68,7 +68,13 @@ export const completeTask = async (taskId) => {
     console.log(`Task ${taskId} completed`);
 
     const taskRef = doc(db, "Task", taskId);
+    const snapShot = await getDoc(taskRef);
+    const task = snapShot.data();
 
+    if (!task.approvalNeeded) {
+      await approveTask(taskId);
+      return;
+    }
     await updateDoc(taskRef, {
       status: "pending",
     });
