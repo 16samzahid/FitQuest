@@ -10,7 +10,35 @@ import {
 } from "firebase/firestore";
 import { db } from "../../config/FirebaseConfig";
 
+const weekdayMap = {
+  Sunday: 0,
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6,
+};
+
+const getNextDueDate = (recurrenceDay, fromDate) => {
+  const base = fromDate?.toDate ? fromDate.toDate() : new Date(fromDate);
+  base.setHours(0, 0, 0, 0);
+  const todayIndex = base.getDay();
+  const targetIndex = weekdayMap[recurrenceDay];
+  let diff = targetIndex - todayIndex;
+
+  // move forward at least 1 week
+  if (diff <= 0) {
+    diff += 7;
+  }
+
+  const nextDate = new Date(base);
+  nextDate.setDate(base.getDate() + diff);
+  return nextDate;
+};
+
 export const createTask = async (taskData) => {
+  console.log(taskData.recurrence);
   return await addDoc(collection(db, "Task"), taskData);
 };
 
@@ -77,6 +105,23 @@ export const approveTask = async (taskId) => {
       coins: increment(task.coins),
       level: newLevel,
     });
+    if (task.recurrence) {
+      const nextDueDate = getNextDueDate(task.recurrence, task.dueDate);
+      await addDoc(collection(db, "Task"), {
+        approvalNeeded: task.approvalNeeded,
+        approvedBy: null,
+        category: task.category,
+        childID: task.childID,
+        coins: task.coins,
+        completedAt: null,
+        createdAt: Timestamp.now(),
+        description: task.description,
+        dueDate: Timestamp.fromDate(nextDueDate),
+        recurrence: task.recurrence,
+        status: "notdone",
+        xp: task.xp,
+      });
+    }
   } catch (error) {
     console.error("Error approving task:", error);
   }

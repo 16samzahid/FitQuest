@@ -14,14 +14,32 @@ function Tasks() {
 
   // return true if the task's dueDate is the same calendar day as today
   const isDueToday = (task) => {
-    if (!task.dueDate) return false; // undated tasks are not "due today"
-    const due = task.dueDate.toDate();
     const today = new Date();
-    return (
-      due.getFullYear() === today.getFullYear() &&
-      due.getMonth() === today.getMonth() &&
-      due.getDate() === today.getDate()
-    );
+
+    // get today's weekday name (e.g. "Monday")
+    const todayName = today.toLocaleDateString("en-GB", {
+      weekday: "long",
+    });
+
+    // 1️⃣ check exact date match
+    if (task.dueDate) {
+      const due = task.dueDate.toDate();
+
+      const sameExactDate =
+        due.getFullYear() === today.getFullYear() &&
+        due.getMonth() === today.getMonth() &&
+        due.getDate() === today.getDate();
+
+      if (sameExactDate) return true;
+    }
+
+    // 2️⃣ check recurring weekday match
+    if (task.recurrence) {
+      console.log(task.recurrence, todayName);
+      return task.recurrence === todayName;
+    }
+
+    return false;
   };
   const todayTasks = tasks.filter(isDueToday); // only tasks with a due date matching today
 

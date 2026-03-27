@@ -23,14 +23,27 @@ export default function TasksCompleted() {
 
       // Filter for today's tasks
       const today = new Date();
+      const todayName = today.toLocaleDateString("en-GB", {
+        weekday: "long",
+      });
+
       const todayTasksFiltered = allTasks.filter((task) => {
-        if (!task.dueDate) return false;
-        const due = task.dueDate.toDate();
-        return (
-          due.getFullYear() === today.getFullYear() &&
-          due.getMonth() === today.getMonth() &&
-          due.getDate() === today.getDate()
-        );
+        // 1️⃣ check exact date match
+        if (task.dueDate) {
+          const due = task.dueDate.toDate();
+          const sameExactDate =
+            due.getFullYear() === today.getFullYear() &&
+            due.getMonth() === today.getMonth() &&
+            due.getDate() === today.getDate();
+          if (sameExactDate) return true;
+        }
+
+        // 2️⃣ check recurring weekday match
+        if (task.recurrence) {
+          return task.recurrence === todayName;
+        }
+
+        return false;
       });
 
       setTodayTasks(todayTasksFiltered);

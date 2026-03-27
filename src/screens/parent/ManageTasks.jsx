@@ -11,6 +11,34 @@ const ManageTasks = () => {
   // setting the values to be updated in backend
   const { child } = useAppData();
   const [modalVisible, setModalVisible] = useState(false);
+  const weekdayMap = {
+    Sunday: 0,
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6,
+  };
+
+  const getFirstDueDate = (recurrenceDay) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todayIndex = today.getDay();
+    const targetIndex = weekdayMap[recurrenceDay];
+
+    let diff = targetIndex - todayIndex;
+
+    if (diff < 0) {
+      diff += 7;
+    }
+
+    const dueDate = new Date(today);
+    dueDate.setDate(today.getDate() + diff);
+
+    return dueDate;
+  };
 
   const handleCreateTask = async (
     description,
@@ -26,6 +54,10 @@ const ManageTasks = () => {
       return;
     }
     try {
+      let finalDueDate = dueDate;
+      if (recurrence) {
+        finalDueDate = getFirstDueDate(recurrence);
+      }
       await createTask({
         approvalNeeded: approvalNeeded,
         approvedBy: null,
@@ -35,7 +67,7 @@ const ManageTasks = () => {
         completedAt: null,
         createdAt: Timestamp.now(),
         description: description,
-        dueDate: dueDate ? Timestamp.fromDate(dueDate) : null,
+        dueDate: finalDueDate ? Timestamp.fromDate(finalDueDate) : null,
         recurrence: recurrence ?? null,
         status: "notdone",
         xp: 10,
