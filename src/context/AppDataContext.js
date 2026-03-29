@@ -5,6 +5,8 @@ import {
   getDocs,
   onSnapshot,
   query,
+  Timestamp,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import {
@@ -100,6 +102,36 @@ export function AppDataProvider({ children }) {
     setLoading(false);
   }, [user]);
 
+  const applyPetStatDecay = async (childData) => {
+    if (!childData?.lastStatusUpdate) return;
+
+    const now = new Date();
+
+    const lastUpdate =
+      typeof childData.lastStatusUpdate.toDate === "function"
+        ? childData.lastStatusUpdate.toDate()
+        : new Date(childData.lastStatusUpdate);
+
+    // difference in FULL days
+    const daysPassed = Math.floor((now - lastUpdate) / (1000 * 60 * 60 * 24));
+
+    // prevents infinite loop
+    if (daysPassed <= 0) return;
+
+    const decreaseAmount = daysPassed * 10;
+
+    console.log("Days passed:", daysPassed);
+    console.log("Decrease:", decreaseAmount);
+
+    await updateDoc(doc(db, "Child", childData.id), {
+      hunger: Math.max(0, childData.hunger - decreaseAmount),
+      happiness: Math.max(0, childData.happiness - decreaseAmount),
+      health: Math.max(0, childData.health - decreaseAmount),
+
+      lastStatusUpdate: Timestamp.now(),
+    });
+  };
+
   // 🔑 rerun when user changes
   useEffect(() => {
     fetchData();
@@ -144,18 +176,21 @@ export function AppDataProvider({ children }) {
   }, [user, fetchData]);
 
   // 🔍 correct way to log state changes
-  useEffect(() => {}, [parent, child, pet]);
-
-  // whenever the child object changes (including from the real-time
-  // listener) refresh any associated pet data such as images.
   useEffect(() => {
     const loadPetResources = async () => {
+      console.log("DECAY CHECK RUNNING");
+      console.log("last update:", child?.lastStatusUpdate);
       if (!child || !child.pet) {
         setPet(null);
         return;
       }
 
-      const petData = child.pet;
+      // 🔹 apply stat decay
+      const updatedPet = await applyPetStatDecay(child);
+
+      const petData = updatedPet || child.pet;
+
+      // load colour image
       let imageURL = null;
       if (petData.colourID) {
         const colourSnap = await getDoc(doc(db, "Colours", petData.colourID));
@@ -163,6 +198,8 @@ export function AppDataProvider({ children }) {
           imageURL = colourSnap.data().imageURL;
         }
       }
+
+      // load mood image
       let moodImageURL = null;
       if (petData.mood) {
         const moodSnap = await getDoc(doc(db, "Mood", petData.mood));
@@ -171,8 +208,13 @@ export function AppDataProvider({ children }) {
         }
       }
 
-      setPet({ ...petData, imageURL, moodImageURL });
+      setPet({
+        ...petData,
+        imageURL,
+        moodImageURL,
+      });
     };
+
     loadPetResources();
   }, [child]);
 

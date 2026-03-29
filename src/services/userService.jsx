@@ -1,4 +1,10 @@
-import { collection, doc, setDoc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  setDoc,
+  Timestamp,
+  updateDoc,
+} from "firebase/firestore";
 import { Alert } from "react-native";
 import { db } from "../../config/FirebaseConfig";
 
@@ -20,6 +26,7 @@ export const createParentAndChild = async (parentID) => {
       happiness: 80,
       health: 80,
       hunger: 80,
+      lastStatusUpdate: Timestamp.now(),
       level: 1,
       name: "childname",
       parentID: parentID,
