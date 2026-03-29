@@ -106,10 +106,38 @@ export const approveTask = async (taskId) => {
 
     const newLevel = child.level + levelsGained;
 
+    // update pet's health, happiness, hunger based on task category
+    let healthChange = 0;
+    let happinessChange = 0;
+    let hungerChange = 0;
+
+    switch (task.category) {
+      case "Food" || "Water":
+        healthChange = 0;
+        happinessChange = 0;
+        hungerChange = 10;
+        break;
+      case "Exercise" || "Hygiene":
+        healthChange = 10;
+        happinessChange = 0;
+        hungerChange = 0;
+        break;
+      case "Learning" || "Play":
+        healthChange = 0;
+        happinessChange = 10;
+        hungerChange = 0;
+        break;
+      default:
+        break;
+    }
+
     await updateDoc(childRef, {
       xp: remainingXP,
       coins: increment(task.coins),
       level: newLevel,
+      health: increment(healthChange),
+      happiness: increment(happinessChange),
+      hunger: increment(hungerChange),
     });
     if (task.recurrence) {
       const nextDueDate = getNextDueDate(task.recurrence, task.dueDate);
