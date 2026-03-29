@@ -139,9 +139,7 @@ export const editTask = async (taskId, updatedData) => {
 
     // get existing task
     const snapshot = await getDoc(taskRef);
-
     const existingTask = snapshot.data();
-
     let finalDueDate = existingTask.dueDate;
 
     // if switching to recurring → calculate new due date

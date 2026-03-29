@@ -108,7 +108,19 @@ export function AppDataProvider({ children }) {
     // Firestore propagate automatically. we listen on query by parentID and
     // update state to the first matching child.
     let unsubscribeChild = null;
+    let unsubscribeParent = null;
     if (user) {
+      unsubscribeParent = onSnapshot(
+        doc(db, "Parent", user.uid),
+        (parentSnap) => {
+          if (parentSnap.exists()) {
+            setParent({
+              id: parentSnap.id,
+              ...parentSnap.data(),
+            });
+          }
+        },
+      );
       // we'll listen on Child collection and filter by parentID
       const q = query(
         collection(db, "Child"),
@@ -127,16 +139,12 @@ export function AppDataProvider({ children }) {
 
     return () => {
       unsubscribeChild && unsubscribeChild();
+      unsubscribeParent && unsubscribeParent();
     };
   }, [user, fetchData]);
 
   // 🔍 correct way to log state changes
-  useEffect(() => {
-    // console.log(user.uid);
-    // console.log("PARENT:", parent);
-    // console.log("CHILD:", child);
-    // console.log("PET:", pet);
-  }, [parent, child, pet]);
+  useEffect(() => {}, [parent, child, pet]);
 
   // whenever the child object changes (including from the real-time
   // listener) refresh any associated pet data such as images.

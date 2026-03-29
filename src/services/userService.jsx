@@ -1,4 +1,5 @@
-import { collection, doc, setDoc } from "firebase/firestore";
+import { collection, doc, setDoc, updateDoc } from "firebase/firestore";
+import { Alert } from "react-native";
 import { db } from "../../config/FirebaseConfig";
 
 export const createParentAndChild = async (parentID) => {
@@ -24,8 +25,6 @@ export const createParentAndChild = async (parentID) => {
       parentID: parentID,
       pet: {
         colourID: "red_id",
-        imageURL:
-          "https://firebasestorage.googleapis.com/v0/b/fitquest-c9d82.firebasestorage.app/o/bodies%2Fred.png?alt=media&token=75d0adc9-945d-400f-8a57-f160c0dd6d46",
         mood: "happy",
       },
       xp: 0,
@@ -35,5 +34,28 @@ export const createParentAndChild = async (parentID) => {
     console.log("Parent and child created successfully");
   } catch (error) {
     console.error("Error creating parent/child:", error);
+  }
+};
+
+export const editChildName = async (childID, newName) => {
+  try {
+    await updateDoc(doc(db, "Child", childID), {
+      name: newName,
+    });
+    console.log("Child name updated successfully");
+    Alert.alert("Success", "Child name updated successfully");
+  } catch (error) {
+    console.error("Error updating child name:", error);
+  }
+};
+
+export const editParentPin = async (parentID, newPin) => {
+  try {
+    await updateDoc(doc(db, "Parent", parentID), {
+      pin: newPin,
+    });
+    console.log("Parent PIN updated successfully");
+  } catch (error) {
+    console.error("Error updating parent PIN:", error);
   }
 };
