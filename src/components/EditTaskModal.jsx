@@ -266,12 +266,6 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
             <Pressable
               className="px-4 py-2 rounded-full bg-gray-200 mr-2"
               onPress={() => {
-                setDescription("");
-                setCoins("");
-                setDueDate(null);
-                setSelectedDay(null);
-                setIsRecurring(false);
-
                 onClose();
               }}
             >
