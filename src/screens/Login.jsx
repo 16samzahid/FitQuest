@@ -44,7 +44,7 @@ const Login = () => {
       />
 
       {error && (
-        <Text className="text-red-600 text-center mb-2 font-semibold">
+        <Text className="text-red text-center mb-2 font-semibold">
           Username or Password incorrect
         </Text>
       )}

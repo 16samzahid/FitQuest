@@ -8,7 +8,14 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { db } from "../../config/FirebaseConfig";
 import { useAppData } from "../context/AppDataContext";
 
@@ -17,7 +24,10 @@ const Shop = () => {
   const [activeTab, setActiveTab] = useState("colours");
   const [colours, setColours] = useState([]);
   const [accessories, setAccessories] = useState([]);
+  const { width } = useWindowDimensions();
 
+  const circleSize = (width - 60) / 3;
+  // 60 accounts for padding + gaps
   const handleAccessoryPress = async (item, owned) => {
     console.log(
       `Accessory ${item.id} pressed, owned: ${owned}, equipped: ${owned && childAccessories.find((a) => a.accessoryID === item.id)?.equipped}`,
@@ -69,8 +79,10 @@ const Shop = () => {
       console.warn("changeColour called with no child");
       return;
     }
+    setPet((prev) => ({ ...prev, colourID: colourId }));
 
     try {
+      // optimistic update
       const colourSnap = await getDoc(doc(db, "Colours", colourId));
 
       if (colourSnap.exists()) {
@@ -78,7 +90,6 @@ const Shop = () => {
 
         await updateDoc(doc(db, "Child", child.id), {
           "pet.colourID": colourId,
-          "pet.imageURL": imageURL,
         });
 
         setPet((prev) => ({ ...prev, colourID: colourId, imageURL }));
@@ -153,13 +164,16 @@ const Shop = () => {
             {colours.map((colour) => (
               <View key={colour.id} className="w-1/3 items-center mb-4">
                 <Pressable
-                  className={`h-32 w-32 rounded-full ${
-                    pet?.colourID === colour.id
-                      ? "border-4 border-black"
-                      : "border border-transparent"
-                  }`}
-                  style={{ backgroundColor: colour.hex }}
                   onPress={changeColour(colour.id)}
+                  style={{
+                    width: circleSize,
+                    height: circleSize,
+                    borderRadius: circleSize / 2,
+                    backgroundColor: colour.hex,
+                    borderWidth: pet?.colourID === colour.id ? 4 : 1,
+                    borderColor:
+                      pet?.colourID === colour.id ? "black" : "transparent",
+                  }}
                 />
 
                 <Text className="mt-2 font-semibold text-sm text-center">
