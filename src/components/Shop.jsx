@@ -74,14 +74,14 @@ const Shop = () => {
         });
         playSound();
 
-        const currentlyEquipped = childAccessories.filter((a) => a.equipped);
-        await Promise.all(
-          currentlyEquipped.map((other) =>
-            updateDoc(doc(db, "ChildAccessory", other.id), {
-              equipped: false,
-            }),
-          ),
-        );
+        // const currentlyEquipped = childAccessories.filter((a) => a.equipped);
+        // await Promise.all(
+        //   currentlyEquipped.map((other) =>
+        //     updateDoc(doc(db, "ChildAccessory", other.id), {
+        //       equipped: false,
+        //     }),
+        //   ),
+        // );
       }
     } catch (error) {
       console.error("Accessory action failed:", error);
