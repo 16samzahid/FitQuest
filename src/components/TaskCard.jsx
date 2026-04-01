@@ -1,4 +1,5 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Audio } from "expo-av";
 import React, { useRef } from "react";
 import { Animated, Text, TouchableOpacity, View } from "react-native";
 import { completeTask } from "../services/taskService";
@@ -12,6 +13,17 @@ export default function TaskCard({
 }) {
   const slideAnim = useRef(new Animated.Value(0)).current;
 
+  const playSound = async () => {
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        require("../../assets/sounds/congrats.mp3"),
+      );
+      await sound.playAsync();
+    } catch (error) {
+      console.error("Error playing sound:", error);
+    }
+  };
+
   const handleCheckPress = () => {
     // animate away first
     Animated.timing(slideAnim, {
@@ -24,6 +36,7 @@ export default function TaskCard({
       completeTask(taskID);
       onComplete && onComplete(taskID);
     });
+    playSound();
   };
 
   const translateX = slideAnim.interpolate({

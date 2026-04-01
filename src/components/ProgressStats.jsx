@@ -2,7 +2,6 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import { Text, View, useWindowDimensions } from "react-native";
 import { BarChart, PieChart } from "react-native-gifted-charts";
-import PagerView from "react-native-pager-view";
 import { db } from "../../config/FirebaseConfig";
 import { useAppData } from "../context/AppDataContext";
 
@@ -136,66 +135,66 @@ export default function ProgressStats() {
       </Text>
 
       <View className="h-[86%] w-full bg-white rounded-[40px] mt-2 shadow-md p-3">
-        <PagerView style={{ flex: 1 }} initialPage={0}>
-          {/* PIE CHART */}
-          <View key="1" className="flex-1 items-center justify-center">
-            <Text className="text-[#393F74] font-bold text-lg mb-2">
-              Completed vs Not Completed
-            </Text>
+        {/* <PagerView style={{ flex: 1 }} initialPage={0}> */}
+        {/* PIE CHART */}
+        <View key="1" className="flex-1 items-center justify-center">
+          <Text className="text-[#393F74] font-bold text-lg mb-2">
+            Completed vs Not Completed
+          </Text>
 
-            <PieChart
-              data={stats.pieData}
-              showText
-              donut
-              radius={85}
-              innerRadius={40}
-              textStyle={{
-                fontSize: 13,
-                color: "#1F2D6D",
-              }}
-              centerLabelComponent={() => (
-                <Text className="text-[#302ECC] text-base font-semibold">
-                  {stats.total} total
-                </Text>
-              )}
-            />
+          <PieChart
+            data={stats.pieData}
+            showText
+            donut
+            radius={85}
+            innerRadius={40}
+            textStyle={{
+              fontSize: 13,
+              color: "#1F2D6D",
+            }}
+            centerLabelComponent={() => (
+              <Text className="text-[#302ECC] text-base font-semibold">
+                {stats.total} total
+              </Text>
+            )}
+          />
 
-            {/* LEGEND */}
-            <View className="flex-row gap-6 mt-4">
-              <View className="flex-row items-center">
-                <View className="w-3 h-3 rounded-full bg-[#4A90E2] mr-2" />
-                <Text className="text-sm">Completed</Text>
-              </View>
+          {/* LEGEND */}
+          <View className="flex-row gap-6 mt-4">
+            <View className="flex-row items-center">
+              <View className="w-3 h-3 rounded-full bg-[#4A90E2] mr-2" />
+              <Text className="text-sm">Completed</Text>
+            </View>
 
-              <View className="flex-row items-center">
-                <View className="w-3 h-3 rounded-full bg-[#C4C4C4] mr-2" />
-                <Text className="text-sm">Not completed</Text>
-              </View>
+            <View className="flex-row items-center">
+              <View className="w-3 h-3 rounded-full bg-[#C4C4C4] mr-2" />
+              <Text className="text-sm">Not completed</Text>
             </View>
           </View>
+        </View>
 
-          {/* BAR CHART */}
-          <View key="2" className="flex-1 items-center justify-center">
-            <Text className="text-[#393F74] font-bold text-lg text-center mb-3">
-              Tasks Completed This Week
-            </Text>
-            <BarChart
-              data={stats.barData}
-              width={width - 80}
-              barWidth={24}
-              spacing={18}
-              initialSpacing={8}
-              endSpacing={8}
-              barBorderRadius={6}
-              fromZero
-              hideYAxisText
-              yAxisThickness={0}
-              xAxisThickness={0}
-              // hideRules
-              stepValue={0.5}
-            />
-          </View>
-        </PagerView>
+        {/* BAR CHART */}
+        <View key="2" className="flex-1 items-center justify-center">
+          <Text className="text-[#393F74] font-bold text-lg text-center mb-3">
+            Tasks Completed This Week
+          </Text>
+          <BarChart
+            data={stats.barData}
+            width={width - 80}
+            barWidth={24}
+            spacing={18}
+            initialSpacing={8}
+            endSpacing={8}
+            barBorderRadius={6}
+            fromZero
+            hideYAxisText
+            yAxisThickness={0}
+            xAxisThickness={0}
+            // hideRules
+            stepValue={0.5}
+          />
+        </View>
+        {/* </PagerView> */}
         <View className="items-center">
           <Text className="text-md text-gray-500">
             {"<"} Swipe for more stats{" >"}

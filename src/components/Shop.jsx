@@ -1,4 +1,5 @@
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import { Audio } from "expo-av";
 import {
   addDoc,
   collection,
@@ -28,6 +29,18 @@ const Shop = () => {
 
   const circleSize = (width - 60) / 3;
   // 60 accounts for padding + gaps
+
+  const playSound = async () => {
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        require("../../assets/sounds/purchase_success.mp3"),
+      );
+      await sound.playAsync();
+    } catch (error) {
+      console.error("Error playing sound:", error);
+    }
+  };
+
   const handleAccessoryPress = async (item, owned) => {
     console.log(
       `Accessory ${item.id} pressed, owned: ${owned}, equipped: ${owned && childAccessories.find((a) => a.accessoryID === item.id)?.equipped}`,
@@ -59,6 +72,7 @@ const Shop = () => {
           accessoryID: item.id,
           equipped: true,
         });
+        playSound();
 
         const currentlyEquipped = childAccessories.filter((a) => a.equipped);
         await Promise.all(
