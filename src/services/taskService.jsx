@@ -38,7 +38,7 @@ const getNextDueDate = (recurrenceDay, fromDate) => {
 };
 
 export const createTask = async (taskData) => {
-  console.log(taskData.recurrence);
+  // console.log(taskData.recurrence);
   return await addDoc(collection(db, "Task"), taskData);
 };
 
