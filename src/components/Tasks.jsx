@@ -4,6 +4,7 @@ import { Dimensions, ScrollView, Text, View } from "react-native";
 import ConfettiCannon from "react-native-confetti-cannon";
 import { db } from "../../config/FirebaseConfig";
 import { useAppData } from "../context/AppDataContext";
+import { isDueToday } from "../timeUtils";
 import TaskCard from "./TaskCard";
 const { width } = Dimensions.get("window");
 
@@ -13,23 +14,23 @@ function Tasks() {
   const [showConfetti, setShowConfetti] = useState(false);
 
   // return true if the task's dueDate is the same calendar day as today
-  const isDueToday = (task) => {
-    const today = new Date();
+  // const isDueToday = (task) => {
+  //   const today = new Date();
 
-    // check exact date match
-    if (task.dueDate) {
-      const due = task.dueDate.toDate();
+  //   // check exact date match
+  //   if (task.dueDate) {
+  //     const due = task.dueDate.toDate();
 
-      const sameExactDate =
-        due.getFullYear() === today.getFullYear() &&
-        due.getMonth() === today.getMonth() &&
-        due.getDate() === today.getDate();
+  //     const sameExactDate =
+  //       due.getFullYear() === today.getFullYear() &&
+  //       due.getMonth() === today.getMonth() &&
+  //       due.getDate() === today.getDate();
 
-      if (sameExactDate) return true;
-    }
+  //     if (sameExactDate) return true;
+  //   }
 
-    return false;
-  };
+  //   return false;
+  // };
   const todayTasks = tasks.filter(isDueToday); // only tasks with a due date matching today
 
   const triggerCelebration = (taskID) => {

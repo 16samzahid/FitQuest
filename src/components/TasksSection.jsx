@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { db } from "../../config/FirebaseConfig";
 import { useAppData } from "../context/AppDataContext";
+import { isDueToday } from "../timeUtils";
 import EditTaskCard from "./EditTaskCard";
 
 export default function TasksSection({ title }) {
@@ -10,16 +11,16 @@ export default function TasksSection({ title }) {
   const [tasks, setTasks] = useState([]);
 
   // return true if the task's dueDate is the same calendar day as today
-  const isDueToday = (task) => {
-    if (!task.dueDate) return false; // undated tasks are not "due today"
-    const due = task.dueDate.toDate();
-    const today = new Date();
-    return (
-      due.getFullYear() === today.getFullYear() &&
-      due.getMonth() === today.getMonth() &&
-      due.getDate() === today.getDate()
-    );
-  };
+  // const isDueToday = (task) => {
+  //   if (!task.dueDate) return false; // undated tasks are not "due today"
+  //   const due = task.dueDate.toDate();
+  //   const today = new Date();
+  //   return (
+  //     due.getFullYear() === today.getFullYear() &&
+  //     due.getMonth() === today.getMonth() &&
+  //     due.getDate() === today.getDate()
+  //   );
+  // };
 
   const isNotDone = (task) => task.status === "notdone";
 
