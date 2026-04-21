@@ -75,7 +75,11 @@ export default function ChildHome() {
       </Text>
       {/* Avatar */}
       <View className="flex-row justify-center justify-evenly">
-        <Avatar />
+        <Avatar
+          health={child?.health ?? 0}
+          happiness={child?.happiness ?? 0}
+          hunger={child?.hunger ?? 0}
+        />
       </View>
 
       {/*Summary Card */}
