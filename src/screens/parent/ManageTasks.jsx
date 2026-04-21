@@ -96,6 +96,7 @@ const ManageTasks = () => {
         <AddTaskModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
+          childID={child?.id}
           onCreate={({
             description,
             approvalNeeded,

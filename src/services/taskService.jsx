@@ -4,9 +4,12 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
   increment,
+  query,
   Timestamp,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { db } from "../../config/FirebaseConfig";
 
@@ -207,5 +210,23 @@ export const editTask = async (taskId, updatedData) => {
     console.log(`Task ${taskId} updated`);
   } catch (error) {
     console.error("Error editing task:", error);
+  }
+};
+
+export const getTaskHistory = async (childID) => {
+  try {
+    const q = query(
+      collection(db, "Task"),
+      where("childID", "==", childID),
+      // where("status", "==", "approved")
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error("Error fetching completed tasks:", error);
+    return [];
   }
 };

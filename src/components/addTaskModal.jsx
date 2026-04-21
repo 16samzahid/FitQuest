@@ -1,10 +1,18 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Checkbox from "expo-checkbox";
-import { useState } from "react";
-import { Modal, Pressable, Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
+import { getTaskHistory } from "../services/taskService";
 
-export default function AddTaskModal({ visible, onClose, onCreate }) {
+export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
   const [description, setDescription] = useState("");
   const [approvalNeeded, setApprovalNeeded] = useState(true);
   const [category, setCategory] = useState(null);
@@ -17,6 +25,10 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
   // recurring
   const [isRecurring, setIsRecurring] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
+
+  // completed tasks history
+  const [completedTasks, setCompletedTasks] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   const categories = [
     { label: "Exercise", value: "Exercise" },
@@ -42,6 +54,29 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
     "Friday",
     "Saturday",
   ];
+
+  useEffect(() => {
+    if (visible && childID) {
+      const fetchTaskHistory = async () => {
+        const tasks = await getTaskHistory(childID);
+        setCompletedTasks(tasks);
+      };
+      fetchTaskHistory();
+    }
+  }, [visible, childID]);
+
+  const selectFromHistory = (task) => {
+    setDescription(task.description);
+    setApprovalNeeded(task.approvalNeeded);
+    setCategory(task.category);
+    setCoins(task.coins.toString());
+    // setDueDate(task.dueDate ? task.dueDate.toDate() : null);
+    setIsRecurring(!!task.recurrence);
+    if (task.recurrence) {
+      setSelectedDay(weekdays.indexOf(task.recurrence));
+    }
+    setShowHistory(false);
+  };
 
   const toggleDay = (index) => {
     if (selectedDay === index) {
@@ -73,6 +108,7 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
     setDueDate(null);
     setSelectedDay(null);
     setIsRecurring(false);
+    setShowHistory(false);
   };
 
   return (
@@ -82,6 +118,39 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
           <Text className="text-xl font-bold text-[#150F59] mb-2">
             Create Task
           </Text>
+
+          {completedTasks.length > 0 && (
+            <Pressable
+              onPress={() => setShowHistory(!showHistory)}
+              className="mb-4 p-2 bg-gray-100 rounded-lg"
+            >
+              <Text className="text-center text-gray-700">
+                {showHistory ? "Hide Task History" : "Choose from Task History"}
+              </Text>
+            </Pressable>
+          )}
+
+          {showHistory && (
+            <View className="mb-4 max-h-48">
+              <Text className="text-lg font-semibold mb-2">
+                Completed Tasks:
+              </Text>
+              <ScrollView>
+                {completedTasks.map((task) => (
+                  <Pressable
+                    key={task.id}
+                    onPress={() => selectFromHistory(task)}
+                    className="p-2 mb-1 bg-blue-50 rounded border"
+                  >
+                    <Text className="text-gray-800">{task.description}</Text>
+                    <Text className="text-sm text-gray-600">
+                      {task.category} - {task.coins} coins
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
           {/* Description */}
           <TextInput
