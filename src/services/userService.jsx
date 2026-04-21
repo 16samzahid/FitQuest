@@ -1,4 +1,5 @@
 import {
+  addDoc,
   collection,
   doc,
   setDoc,
@@ -11,17 +12,19 @@ import { db } from "../../config/FirebaseConfig";
 export const createParentAndChild = async (parentID) => {
   console.log("Creating parent and child with parentID:", parentID);
   try {
-    // 🔹 Create Parent document
+    // Create Parent document
     await setDoc(doc(db, "Parent", parentID), {
       name: "parentname",
-      pin: "1234", // default PIN, can be updated later in profile setup
+      pin: "1234",
     });
     console.log("Parent created with ID:", parentID);
 
-    // 🔹 Create Child document
+    // Create Child document
     const childRef = doc(collection(db, "Child"));
     const childID = childRef.id;
+
     await setDoc(childRef, {
+      hasSeenWelcomeMessage: false,
       coins: 0,
       happiness: 80,
       health: 80,
@@ -38,7 +41,53 @@ export const createParentAndChild = async (parentID) => {
     });
     console.log("Child created and linked to parent ID:", parentID);
 
-    console.log("Parent and child created successfully");
+    // Create default daily tasks
+    await addDoc(collection(db, "Task"), {
+      approvalNeeded: true,
+      approvedBy: null,
+      category: "Water",
+      childID: childID,
+      coins: 5,
+      completedAt: null,
+      createdAt: Timestamp.now(),
+      description: "Drink a glass of water",
+      dueDate: Timestamp.now(),
+      recurrence: "daily",
+      status: "notdone",
+      xp: 5,
+    });
+
+    await addDoc(collection(db, "Task"), {
+      approvalNeeded: true,
+      approvedBy: null,
+      category: "Food",
+      childID: childID,
+      coins: 5,
+      completedAt: null,
+      createdAt: Timestamp.now(),
+      description: "Eat a piece of fruit",
+      dueDate: Timestamp.now(),
+      recurrence: "daily",
+      status: "notdone",
+      xp: 5,
+    });
+
+    await addDoc(collection(db, "Task"), {
+      approvalNeeded: true,
+      approvedBy: null,
+      category: "Exercise",
+      childID: childID,
+      coins: 5,
+      completedAt: null,
+      createdAt: Timestamp.now(),
+      description: "Do 5 star jumps",
+      dueDate: Timestamp.now(),
+      recurrence: "daily",
+      status: "notdone",
+      xp: 5,
+    });
+
+    console.log("Parent, child, and default tasks created successfully");
   } catch (error) {
     console.error("Error creating parent/child:", error);
   }

@@ -26,11 +26,17 @@ const weekdayMap = {
 const getNextDueDate = (recurrenceDay, fromDate) => {
   const base = fromDate?.toDate ? fromDate.toDate() : new Date(fromDate);
   base.setHours(0, 0, 0, 0);
+
+  if (recurrenceDay === "daily") {
+    const nextDate = new Date(base);
+    nextDate.setDate(nextDate.getDate() + 1);
+    return nextDate;
+  }
+
   const todayIndex = base.getDay();
   const targetIndex = weekdayMap[recurrenceDay];
   let diff = targetIndex - todayIndex;
 
-  // move forward at least 1 week
   if (diff <= 0) {
     diff += 7;
   }
@@ -115,21 +121,21 @@ export const approveTask = async (taskId) => {
     let hungerChange = 0;
 
     switch (task.category) {
-      case "Food" || "Water":
-        healthChange = 0;
-        happinessChange = 0;
+      case "Food":
+      case "Water":
         hungerChange = 10;
         break;
-      case "Exercise" || "Hygiene":
+
+      case "Exercise":
+      case "Hygiene":
         healthChange = 10;
-        happinessChange = 0;
-        hungerChange = 0;
         break;
-      case "Learning" || "Play":
-        healthChange = 0;
+
+      case "Learning":
+      case "Play":
         happinessChange = 10;
-        hungerChange = 0;
         break;
+
       default:
         break;
     }

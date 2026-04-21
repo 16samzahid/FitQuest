@@ -2,7 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { signOut } from "firebase/auth";
 import { useState } from "react";
-import { Modal, Pressable, Text, TextInput, View } from "react-native";
+import { Alert, Modal, Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { auth } from "../../../config/FirebaseConfig.js";
 import { useAppData } from "../../context/AppDataContext";
@@ -28,6 +28,20 @@ const Settings = () => {
   const handleSavePin = () => {
     editParentPin(parent.id, newPin);
     setPinModal(false);
+  };
+
+  const handleSignOut = () => {
+    Alert.alert("Confirm Sign Out", "Are you sure you want to log out?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Log Out",
+        style: "destructive",
+        onPress: () => signOut(auth),
+      },
+    ]);
   };
 
   return (
@@ -110,7 +124,7 @@ const Settings = () => {
         {/* LOGOUT */}
         <View className="flex-1 justify-end pb-6">
           <Pressable
-            onPress={() => signOut(auth)}
+            onPress={handleSignOut}
             className="bg-[#e54646] rounded-xl py-4 items-center"
           >
             <Text className="text-white text-lg font-semibold">Log Out</Text>
