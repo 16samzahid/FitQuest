@@ -82,7 +82,9 @@ export default function EditTaskCard({ task = null, title = "Task Title" }) {
                     : "No due date"
                 }`
               : title === "Repeating Tasks"
-                ? `Every ${task?.recurrence}`
+                ? task?.recurrence === "daily"
+                  ? "Daily"
+                  : `Every ${task?.recurrence}`
                 : ""}
           </Text>
         )}
@@ -98,35 +100,39 @@ export default function EditTaskCard({ task = null, title = "Task Title" }) {
 
       {/* Right Side Buttons */}
       <View className="flex-row gap-2">
-        {/* Edit button */}
-        <Pressable
-          onPress={() => setModalVisible(true)}
-          className="w-10 h-10 rounded-full bg-[#4F46E5] items-center justify-center active:scale-95"
-          style={{
-            shadowColor: "#4F46E5",
-            shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.3,
-            shadowRadius: 4,
-            elevation: 4,
-          }}
-        >
-          <MaterialCommunityIcons name="pencil" size={18} color="white" />
-        </Pressable>
+        {/* Edit button - hide for daily tasks */}
+        {task?.recurrence !== "daily" && (
+          <Pressable
+            onPress={() => setModalVisible(true)}
+            className="w-10 h-10 rounded-full bg-[#4F46E5] items-center justify-center active:scale-95"
+            style={{
+              shadowColor: "#4F46E5",
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.3,
+              shadowRadius: 4,
+              elevation: 4,
+            }}
+          >
+            <MaterialCommunityIcons name="pencil" size={18} color="white" />
+          </Pressable>
+        )}
 
-        {/* Delete button */}
-        <Pressable
-          onPress={handleDeleteTask}
-          className="w-10 h-10 rounded-full bg-[#e54646] items-center justify-center active:scale-95"
-          style={{
-            shadowColor: "#e54646",
-            shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.3,
-            shadowRadius: 4,
-            elevation: 4,
-          }}
-        >
-          <MaterialCommunityIcons name="trash-can" size={18} color="white" />
-        </Pressable>
+        {/* Delete button - hide for daily tasks */}
+        {task?.recurrence !== "daily" && (
+          <Pressable
+            onPress={handleDeleteTask}
+            className="w-10 h-10 rounded-full bg-[#e54646] items-center justify-center active:scale-95"
+            style={{
+              shadowColor: "#e54646",
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.3,
+              shadowRadius: 4,
+              elevation: 4,
+            }}
+          >
+            <MaterialCommunityIcons name="trash-can" size={18} color="white" />
+          </Pressable>
+        )}
       </View>
     </View>
   );

@@ -33,9 +33,10 @@ export default function TasksSection({ title }) {
       // only tasks with a due date matching today
       return tasks.filter(isDueToday).filter(isNotDone);
     } else if (title === "Upcoming Tasks") {
-      // tasks with a due date in the future (includes undated)
+      // tasks with a due date in the future (includes undated) but exclude recurring tasks
       return tasks
         .filter((t) => t.dueDate && t.dueDate.toDate() > new Date())
+        .filter((t) => !isRecurring(t))
         .filter(isNotDone);
     } else if (title === "Repeating Tasks") {
       return tasks.filter(isRecurring).filter(isNotDone);
