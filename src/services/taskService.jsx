@@ -219,12 +219,12 @@ export const editTask = async (taskId, updatedData) => {
   }
 };
 
-export const getTaskHistory = async (childID) => {
+export const getCompletedTasks = async (childID) => {
   try {
     const q = query(
       collection(db, "Task"),
       where("childID", "==", childID),
-      // where("status", "==", "approved")
+      where("status", "==", "approved"),
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map((doc) => ({

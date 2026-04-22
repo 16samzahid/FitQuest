@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
-import { getTaskHistory } from "../services/taskService";
+import { getCompletedTasks } from "../services/taskService";
 
 export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
   const [description, setDescription] = useState("");
@@ -57,11 +57,11 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
 
   useEffect(() => {
     if (visible && childID) {
-      const fetchTaskHistory = async () => {
-        const tasks = await getTaskHistory(childID);
+      const fetchCompletedTasks = async () => {
+        const tasks = await getCompletedTasks(childID);
         setCompletedTasks(tasks);
       };
-      fetchTaskHistory();
+      fetchCompletedTasks();
     }
   }, [visible, childID]);
 
@@ -136,18 +136,30 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
                 Completed Tasks:
               </Text>
               <ScrollView>
-                {completedTasks.map((task) => (
-                  <Pressable
-                    key={task.id}
-                    onPress={() => selectFromHistory(task)}
-                    className="p-2 mb-1 bg-blue-50 rounded border"
-                  >
-                    <Text className="text-gray-800">{task.description}</Text>
-                    <Text className="text-sm text-gray-600">
-                      {task.category} - {task.coins} coins
-                    </Text>
-                  </Pressable>
-                ))}
+                {completedTasks
+                  .reduce((uniqueTasks, task) => {
+                    // Only include if we haven't seen this description before
+                    if (
+                      !uniqueTasks.find(
+                        (t) => t.description === task.description,
+                      )
+                    ) {
+                      uniqueTasks.push(task);
+                    }
+                    return uniqueTasks;
+                  }, [])
+                  .map((task) => (
+                    <Pressable
+                      key={task.id}
+                      onPress={() => selectFromHistory(task)}
+                      className="p-2 mb-1 bg-blue-50 rounded border"
+                    >
+                      <Text className="text-gray-800">{task.description}</Text>
+                      <Text className="text-sm text-gray-600">
+                        {task.category} - {task.coins} coins
+                      </Text>
+                    </Pressable>
+                  ))}
               </ScrollView>
             </View>
           )}
