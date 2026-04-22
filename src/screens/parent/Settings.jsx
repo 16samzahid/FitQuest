@@ -103,10 +103,16 @@ const Settings = () => {
 
         // Group tasks by description and keep only the latest instance of each
         const latestTasksMap = new Map();
+
         tasksList.forEach((task) => {
-          const existingTask = latestTasksMap.get(task.description);
-          if (!existingTask || task.createdAt > existingTask.createdAt) {
-            latestTasksMap.set(task.description, task);
+          const key = task.description?.trim()?.toLowerCase() || task.id;
+          const existingTask = latestTasksMap.get(key);
+
+          const currentCreatedAt = task.createdAt?.toMillis?.() ?? 0;
+          const existingCreatedAt = existingTask?.createdAt?.toMillis?.() ?? 0;
+
+          if (!existingTask || currentCreatedAt > existingCreatedAt) {
+            latestTasksMap.set(key, task);
           }
         });
 
@@ -330,6 +336,14 @@ const Settings = () => {
             top: 20,
             right: 20,
             zIndex: 10,
+            backgroundColor: "#ffffff",
+            borderRadius: 9999,
+            padding: 8,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 5,
           }}
         >
           <Ionicons name="swap-horizontal" size={28} color="#374151" />

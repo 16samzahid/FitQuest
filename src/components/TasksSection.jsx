@@ -1,5 +1,5 @@
 import { collection, onSnapshot, query, where } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { db } from "../../config/FirebaseConfig";
 import { useAppData } from "../context/AppDataContext";
@@ -10,43 +10,81 @@ export default function TasksSection({ title }) {
   const { child } = useAppData();
   const [tasks, setTasks] = useState([]);
 
-  // return true if the task's dueDate is the same calendar day as today
-  // const isDueToday = (task) => {
-  //   if (!task.dueDate) return false; // undated tasks are not "due today"
-  //   const due = task.dueDate.toDate();
-  //   const today = new Date();
-  //   return (
-  //     due.getFullYear() === today.getFullYear() &&
-  //     due.getMonth() === today.getMonth() &&
-  //     due.getDate() === today.getDate()
-  //   );
-  // };
-
   const isNotDone = (task) => task.status === "notdone";
 
   const isRecurring = (task) => {
     return task.recurrence !== null && task.recurrence !== "";
   };
 
-  const tasksForSection = (title) => {
+  const isDaily = (task) => task.recurrence === "daily";
+
+  const getTaskKey = (task) =>
+    task.description?.trim()?.toLowerCase() || task.id;
+
+  const getTimestampMillis = (timestamp) => {
+    if (!timestamp) return 0;
+    if (timestamp?.toMillis) return timestamp.toMillis();
+    if (timestamp?.toDate) return timestamp.toDate().getTime();
+    return new Date(timestamp).getTime();
+  };
+
+  // Keep only the latest instance of each daily recurring task
+  const getLatestDailyTasks = (taskList) => {
+    const latestTasksMap = new Map();
+
+    taskList.forEach((task) => {
+      const key = getTaskKey(task);
+      const existingTask = latestTasksMap.get(key);
+
+      if (!existingTask) {
+        latestTasksMap.set(key, task);
+        return;
+      }
+
+      const currentCreatedAt = getTimestampMillis(task.createdAt);
+      const existingCreatedAt = getTimestampMillis(existingTask.createdAt);
+
+      if (currentCreatedAt > existingCreatedAt) {
+        latestTasksMap.set(key, task);
+      }
+    });
+
+    return Array.from(latestTasksMap.values());
+  };
+
+  const filteredTasks = useMemo(() => {
     if (title === "Today's Tasks") {
-      // only tasks with a due date matching today
       return tasks.filter(isDueToday).filter(isNotDone);
-    } else if (title === "Upcoming Tasks") {
-      // tasks with a due date in the future (includes undated) but exclude recurring tasks
+    }
+
+    if (title === "Upcoming Tasks") {
       return tasks
         .filter((t) => t.dueDate && t.dueDate.toDate() > new Date())
         .filter((t) => !isRecurring(t))
         .filter(isNotDone);
-    } else if (title === "Repeating Tasks") {
-      return tasks.filter(isRecurring).filter(isNotDone);
     }
-  };
 
-  const filteredTasks = tasksForSection(title);
+    if (title === "Repeating Tasks") {
+      const recurringTasks = tasks.filter(isRecurring).filter(isNotDone);
+
+      const dailyTasks = recurringTasks.filter(isDaily);
+      const nonDailyRecurringTasks = recurringTasks.filter(
+        (task) => task.recurrence !== "daily",
+      );
+
+      const latestDailyTasks = getLatestDailyTasks(dailyTasks);
+
+      return [...latestDailyTasks, ...nonDailyRecurringTasks];
+    }
+
+    return [];
+  }, [tasks, title]);
 
   useEffect(() => {
-    if (!child) return;
+    if (!child?.id) {
+      setTasks([]);
+      return;
+    }
 
     const q = query(
       collection(db, "Task"),
@@ -63,17 +101,15 @@ export default function TasksSection({ title }) {
       setTasks(updatedTasks);
     });
 
-    // Cleanup listener when component unmounts
     return () => unsubscribe();
-  }, [child]);
+  }, [child?.id]);
 
-  // fixed height (adjust as needed) so multiple sections stack and the
-  // parent ScrollView handles overflow
-  const sectionHeight = 280; // about 15rem / 240px
+  const sectionHeight = 280;
 
   return (
     <View style={{ height: sectionHeight }} className="flex-none">
       <Text className="text-black font-bold text-xl">{title}</Text>
+
       <ScrollView className="mt-3 flex-1 rounded-[20px] bg-white p-4 mb-4 shadow-md">
         {filteredTasks.map((task) => (
           <EditTaskCard
