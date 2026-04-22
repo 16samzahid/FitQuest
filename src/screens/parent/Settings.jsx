@@ -292,10 +292,7 @@ const Settings = () => {
 
   const handleDeleteTask = (taskId) => {
     if (dailyTasks.length <= 3) {
-      Alert.alert(
-        "Cannot Delete",
-        "You must maintain at least 3 daily tasks.",
-      );
+      Alert.alert("Cannot Delete", "You must maintain at least 3 daily tasks.");
       return;
     }
     Alert.alert(
