@@ -11,7 +11,7 @@ const ChildPet = () => {
     <SafeAreaView className="flex-1 px-4 pt-4" edges={["top"]}>
       {/* Avatar */}
       <View className="mt-10 mb-10 items-center w-full">
-        <Avatar width={400} height={400} />
+        <Avatar width={400} height={400} showSpeechBubble={false} />
         {/* Stats */}
         <View className="flex-1 ml-4"></View>
       </View>

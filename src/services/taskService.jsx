@@ -101,6 +101,7 @@ export const approveTask = async (taskId) => {
       status: "approved",
       completedAt: Timestamp.now(),
     });
+
     // update child's xp and coins
     const taskSnapshot = await getDoc(taskRef);
     const task = taskSnapshot.data();
@@ -140,14 +141,30 @@ export const approveTask = async (taskId) => {
         break;
     }
 
+    const newHealth =
+      healthChange > 0
+        ? Math.min((child.health ?? 0) + healthChange, 100)
+        : (child.health ?? 0);
+
+    const newHappiness =
+      happinessChange > 0
+        ? Math.min((child.happiness ?? 0) + happinessChange, 100)
+        : (child.happiness ?? 0);
+
+    const newHunger =
+      hungerChange > 0
+        ? Math.min((child.hunger ?? 0) + hungerChange, 100)
+        : (child.hunger ?? 0);
+
     await updateDoc(childRef, {
       xp: remainingXP,
       coins: increment(task.coins),
       level: newLevel,
-      health: increment(healthChange),
-      happiness: increment(happinessChange),
-      hunger: increment(hungerChange),
+      health: newHealth,
+      happiness: newHappiness,
+      hunger: newHunger,
     });
+
     if (task.recurrence) {
       const nextDueDate = getNextDueDate(task.recurrence, task.dueDate);
       await addDoc(collection(db, "Task"), {

@@ -79,6 +79,7 @@ export default function ChildHome() {
           health={child?.health ?? 0}
           happiness={child?.happiness ?? 0}
           hunger={child?.hunger ?? 0}
+          showSpeechBubble={true}
         />
       </View>
 

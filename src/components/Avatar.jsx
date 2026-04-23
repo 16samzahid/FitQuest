@@ -4,7 +4,11 @@ import { ActivityIndicator, Image, Text, View } from "react-native";
 import { db } from "../../config/FirebaseConfig";
 import { useAppData } from "../context/AppDataContext";
 
-export default function Avatar({ width = 300, height = 300 }) {
+export default function Avatar({
+  width = 300,
+  height = 300,
+  showSpeechBubble = false,
+}) {
   const { pet, loading, childAccessories, child } = useAppData();
   const [accessories, setAccessories] = useState([]);
 
@@ -62,28 +66,30 @@ export default function Avatar({ width = 300, height = 300 }) {
 
   return (
     <View className="items-center self-center mt-4">
-      <View className="items-center z-10">
-        <View className="max-w-[220px] rounded-2xl bg-white px-4 py-3 shadow">
-          <Text className="text-center text-base font-semibold text-gray-700">
-            {getEncouragementMessage()}
-          </Text>
-        </View>
+      {showSpeechBubble && (
+        <View className="items-center z-10">
+          <View className="max-w-[220px] rounded-2xl bg-white px-4 py-3 shadow">
+            <Text className="text-center text-base font-semibold text-gray-700">
+              {getEncouragementMessage()}
+            </Text>
+          </View>
 
-        <View
-          style={{
-            width: 0,
-            height: 0,
-            borderLeftWidth: 8,
-            borderRightWidth: 8,
-            borderTopWidth: 12,
-            borderLeftColor: "transparent",
-            borderRightColor: "transparent",
-            borderTopColor: "white",
-            marginTop: -1,
-            marginRight: 40, // move right
-          }}
-        />
-      </View>
+          <View
+            style={{
+              width: 0,
+              height: 0,
+              borderLeftWidth: 8,
+              borderRightWidth: 8,
+              borderTopWidth: 12,
+              borderLeftColor: "transparent",
+              borderRightColor: "transparent",
+              borderTopColor: "white",
+              marginTop: -1,
+              marginRight: 40,
+            }}
+          />
+        </View>
+      )}
 
       <View className="w-44 h-44 items-center justify-center relative">
         <Image
