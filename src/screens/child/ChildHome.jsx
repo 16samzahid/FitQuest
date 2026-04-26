@@ -1,10 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { doc, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
+import { useIsFocused } from "@react-navigation/native";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../../config/FirebaseConfig";
 import Avatar from "../../components/Avatar";
+import LevelUpModal from "../../components/LevelUpModal";
 import PetStatsCard from "../../components/PetStatsCard";
 import PinModal from "../../components/PinModal";
 import Tasks from "../../components/Tasks";
@@ -15,9 +17,20 @@ import { useMode } from "../../context/ModeContext";
 
 export default function ChildHome() {
   const { setMode } = useMode();
-  const { child, loading } = useAppData();
+  const {
+    child,
+    loading,
+    lastSeenLevel,
+    setLastSeenLevel,
+    pendingLevelUp,
+    setPendingLevelUp,
+  } = useAppData();
   const [showPin, setShowPin] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [showLevelUpModal, setShowLevelUpModal] = useState(false);
+  const [showLevel, setShowLevel] = useState(null);
+  const isFocused = useIsFocused();
+
   const handleCloseWelcomeModal = async () => {
     try {
       await updateDoc(doc(db, "Child", child.id), {
@@ -38,11 +51,28 @@ export default function ChildHome() {
       setShowWelcomeModal(false);
     }
   }, [child, loading]);
+
+  useEffect(() => {
+    if (loading || !child || !isFocused || pendingLevelUp == null) return;
+
+    setShowLevel(pendingLevelUp);
+    setShowLevelUpModal(true);
+  }, [child, loading, isFocused, pendingLevelUp]);
+
   return (
     <SafeAreaView className="flex-1 px-4 pt-4" edges={["top"]}>
       <WelcomeModal
         visible={showWelcomeModal}
         onClose={handleCloseWelcomeModal}
+      />
+      <LevelUpModal
+        visible={showLevelUpModal}
+        level={showLevel}
+        onClose={() => {
+          setShowLevelUpModal(false);
+          setPendingLevelUp(null);
+          setLastSeenLevel(child?.level ?? 0);
+        }}
       />
       {/* Switch button */}
       <Pressable

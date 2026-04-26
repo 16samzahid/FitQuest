@@ -29,6 +29,8 @@ export function AppDataProvider({ children }) {
   const [pet, setPet] = useState(null);
   const [loading, setLoading] = useState(true);
   const [childAccessories, setAccessories] = useState([]);
+  const [lastSeenLevel, setLastSeenLevel] = useState(null);
+  const [pendingLevelUp, setPendingLevelUp] = useState(null);
 
   /*
     Mood logic
@@ -242,6 +244,15 @@ export function AppDataProvider({ children }) {
     update pet images + mood when child changes
   */
   useEffect(() => {
+    if (child && lastSeenLevel === null) {
+      setLastSeenLevel(child.level ?? 0);
+    }
+
+    const currentLevel = child?.level ?? 0;
+    if (child && lastSeenLevel != null && currentLevel > lastSeenLevel) {
+      setPendingLevelUp(currentLevel);
+    }
+
     const loadPetResources = async () => {
       if (!child || !child.pet) {
         setPet(null);
@@ -346,6 +357,10 @@ export function AppDataProvider({ children }) {
         loading,
         childAccessories,
         refreshData: fetchData,
+        lastSeenLevel,
+        setLastSeenLevel,
+        pendingLevelUp,
+        setPendingLevelUp,
       }}
     >
       {children}

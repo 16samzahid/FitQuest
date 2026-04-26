@@ -36,6 +36,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
     { label: "Hygiene", value: "Hygiene" },
     { label: "Food", value: "Food" },
     { label: "Play", value: "Play" },
+    { label: "Water", value: "Water" },
   ];
 
   const coinOptions = [
