@@ -6,6 +6,7 @@ import {
   getDoc,
   getDocs,
   increment,
+  onSnapshot,
   query,
   Timestamp,
   updateDoc,
@@ -252,4 +253,19 @@ export const getCompletedTasks = async (childID) => {
     console.error("Error fetching completed tasks:", error);
     return [];
   }
+};
+export const listenToPendingTasks = (childID, callback) => {
+  if (!childID) return () => {};
+
+  const q = query(
+    collection(db, "Task"),
+    where("childID", "==", childID),
+    where("status", "==", "pending"),
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    callback(!snapshot.empty);
+  });
+
+  return unsubscribe;
 };

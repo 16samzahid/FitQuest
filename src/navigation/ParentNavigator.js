@@ -1,12 +1,26 @@
 import { FontAwesome5 } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { useEffect, useState } from "react";
+import { useAppData } from "../context/AppDataContext";
 import ManageTasks from "../screens/parent/ManageTasks";
 import ParentDashboard from "../screens/parent/ParentDashboard";
 import Settings from "../screens/parent/Settings";
+import { listenToPendingTasks } from "../services/taskService";
 
 const Tab = createBottomTabNavigator();
 
 export default function ParentNavigator() {
+  const { child } = useAppData();
+  const [hasPendingTasks, setHasPendingTasks] = useState(false);
+
+  useEffect(() => {
+    if (!child?.id) return;
+
+    const unsubscribe = listenToPendingTasks(child.id, setHasPendingTasks);
+
+    return () => unsubscribe();
+  }, [child?.id]);
+
   return (
     <Tab.Navigator
       initialRouteName="Dashboard"
@@ -21,7 +35,7 @@ export default function ParentNavigator() {
         tabBarIcon: ({ color }) => {
           const icons = {
             Dashboard: "home",
-            Tasks: "tasks", // ← FontAwesome5 version
+            Tasks: "tasks",
             Settings: "cog",
           };
 
@@ -39,8 +53,19 @@ export default function ParentNavigator() {
         tabBarInactiveTintColor: "rgba(255,255,255,0.5)",
       })}
     >
-      <Tab.Screen name="Dashboard" component={ParentDashboard} />
+      <Tab.Screen
+        name="Dashboard"
+        component={ParentDashboard}
+        options={{
+          tabBarBadge: hasPendingTasks ? "" : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: "#FF0000",
+          },
+        }}
+      />
+
       <Tab.Screen name="Tasks" component={ManageTasks} />
+
       <Tab.Screen name="Settings" component={Settings} />
     </Tab.Navigator>
   );
