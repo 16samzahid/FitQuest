@@ -3,6 +3,8 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import Checkbox from "expo-checkbox";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -11,9 +13,12 @@ import {
   View,
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
+import { useAppData } from "../context/AppDataContext";
+import { generateTaskSuggestion } from "../services/aiService";
 import { getCompletedTasks } from "../services/taskService";
 
 export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
+  const { child } = useAppData();
   const [description, setDescription] = useState("");
   const [approvalNeeded, setApprovalNeeded] = useState(true);
   const [category, setCategory] = useState(null);
@@ -30,6 +35,9 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
   // completed tasks history
   const [completedTasks, setCompletedTasks] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+
+  // AI loading state
+  const [aiLoading, setAiLoading] = useState(false);
 
   const categories = [
     { label: "Exercise", value: "Exercise" },
@@ -88,14 +96,31 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
     }
   };
 
-  const getAISuggestion = () => {
-    // Placeholder for AI suggestion logic
-    // In a real implementation, this would call an API to get a suggestion based on the child's data and task history
-    console.log("Getting AI suggestion...");
-    // For demo purposes, we'll just set some dummy data
-    setDescription("Take a 15-minute walk outside");
-    setCategory("Exercise");
-    setCoins("10");
+  const getAISuggestion = async () => {
+    try {
+      if (!child) {
+        Alert.alert("Error", "No child selected");
+        return;
+      }
+
+      setAiLoading(true);
+      const suggestion = await generateTaskSuggestion(child);
+      console.log("AI suggestion:", suggestion);
+
+      if (suggestion) {
+        setDescription(suggestion.description || "");
+        setCategory(suggestion.category || null);
+        setCoins(suggestion.coins?.toString() || "");
+      }
+    } catch (error) {
+      console.error("Error getting AI suggestion:", error);
+      Alert.alert(
+        "Error",
+        error.message || "Could not get AI suggestion. Please try again.",
+      );
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleCreate = () => {
@@ -145,12 +170,16 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
 
             <Pressable
               onPress={getAISuggestion}
-              className="flex-1 ml-2 py-2 px-3 bg-blue rounded-lg items-center justify-center"
+              disabled={aiLoading}
+              className={`flex-1 ml-2 py-2 px-3 rounded-lg items-center justify-center ${
+                aiLoading ? "bg-gray-400" : "bg-blue"
+              }`}
             >
-              {/* <Text className="text-center text-white text-lg font-bold">
-                AI Suggestion
-              </Text> */}
-              <AntDesign name="open-ai" size={24} color="white" />
+              {aiLoading ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <AntDesign name="open-ai" size={24} color="white" />
+              )}
             </Pressable>
           </View>
 

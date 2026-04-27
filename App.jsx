@@ -1,3 +1,20 @@
+// Polyfill for AbortSignal.any() for React Native compatibility
+if (typeof AbortSignal !== "undefined" && !AbortSignal.any) {
+  AbortSignal.any = function (signals) {
+    const controller = new AbortController();
+    for (const signal of signals) {
+      if (signal.aborted) {
+        controller.abort(signal.reason);
+        return controller.signal;
+      }
+      signal.addEventListener("abort", () => {
+        controller.abort(signal.reason);
+      });
+    }
+    return controller.signal;
+  };
+}
+
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { SafeAreaProvider } from "react-native-safe-area-context";
