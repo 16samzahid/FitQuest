@@ -1,3 +1,4 @@
+import AntDesign from "@expo/vector-icons/AntDesign";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Checkbox from "expo-checkbox";
 import { useEffect, useState } from "react";
@@ -87,6 +88,16 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
     }
   };
 
+  const getAISuggestion = () => {
+    // Placeholder for AI suggestion logic
+    // In a real implementation, this would call an API to get a suggestion based on the child's data and task history
+    console.log("Getting AI suggestion...");
+    // For demo purposes, we'll just set some dummy data
+    setDescription("Take a 15-minute walk outside");
+    setCategory("Exercise");
+    setCoins("10");
+  };
+
   const handleCreate = () => {
     if (!description.trim()) return;
 
@@ -120,16 +131,28 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
             Create Task
           </Text>
 
-          {completedTasks.length > 0 && (
+          <View className="flex-row items-center justify-between mb-4">
+            {completedTasks.length > 0 && (
+              <Pressable
+                onPress={() => setShowHistory(!showHistory)}
+                className="flex-1 mr-2 py-2 px-3 bg-gray-100 rounded-lg"
+              >
+                <Text className="text-center text-gray-700 text-lg font-bold">
+                  {showHistory ? "Hide History" : "Task History"}
+                </Text>
+              </Pressable>
+            )}
+
             <Pressable
-              onPress={() => setShowHistory(!showHistory)}
-              className="mb-4 p-2 bg-gray-100 rounded-lg"
+              onPress={getAISuggestion}
+              className="flex-1 ml-2 py-2 px-3 bg-blue rounded-lg items-center justify-center"
             >
-              <Text className="text-center text-gray-700">
-                {showHistory ? "Hide Task History" : "Choose from Task History"}
-              </Text>
+              {/* <Text className="text-center text-white text-lg font-bold">
+                AI Suggestion
+              </Text> */}
+              <AntDesign name="open-ai" size={24} color="white" />
             </Pressable>
-          )}
+          </View>
 
           {showHistory && (
             <View className="mb-4 max-h-48">
