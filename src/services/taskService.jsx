@@ -8,6 +8,7 @@ import {
   increment,
   onSnapshot,
   query,
+  setDoc,
   Timestamp,
   updateDoc,
   where,
@@ -47,8 +48,14 @@ const getNextDueDate = (recurrenceDay, fromDate) => {
   return nextDate;
 };
 
-export const createTask = async (taskData) => {
+export const createTask = async (taskData, docRef = null) => {
   // console.log(taskData.recurrence);
+  // If a docRef is provided (for recurring tasks with seriesId), use setDoc
+  if (docRef) {
+    await setDoc(docRef, taskData);
+    return docRef;
+  }
+  // Otherwise use addDoc for one-time tasks
   return await addDoc(collection(db, "Task"), taskData);
 };
 
@@ -168,6 +175,8 @@ export const approveTask = async (taskId) => {
 
     if (task.recurrence) {
       const nextDueDate = getNextDueDate(task.recurrence, task.dueDate);
+      // Preserve seriesId for recurring tasks - use existing seriesId or fall back to current task ID
+      const seriesId = task.seriesId || taskId;
       await addDoc(collection(db, "Task"), {
         approvalNeeded: task.approvalNeeded,
         approvedBy: null,
@@ -179,6 +188,7 @@ export const approveTask = async (taskId) => {
         description: task.description,
         dueDate: Timestamp.fromDate(nextDueDate),
         recurrence: task.recurrence,
+        seriesId: seriesId,
         status: "notdone",
         xp: task.xp,
       });
@@ -217,19 +227,24 @@ export const editTask = async (taskId, updatedData) => {
       }
     }
 
-    await updateDoc(taskRef, {
+    // Preserve seriesId if it exists
+    const updatePayload = {
       description: updatedData.description,
-
       approvalNeeded: updatedData.approvalNeeded,
-
       category: updatedData.category,
-
       coins: updatedData.coins,
-
       recurrence: updatedData.recurrence || null,
-
       dueDate: finalDueDate,
-    });
+    };
+
+    // If task has a seriesId, preserve it. If it doesn't but is now recurring, set it to taskId
+    if (existingTask.seriesId) {
+      updatePayload.seriesId = existingTask.seriesId;
+    } else if (updatedData.recurrence) {
+      updatePayload.seriesId = taskId;
+    }
+
+    await updateDoc(taskRef, updatePayload);
 
     console.log(`Task ${taskId} updated`);
   } catch (error) {

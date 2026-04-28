@@ -10,7 +10,8 @@ export default function TasksSection({ title }) {
   const { child } = useAppData();
   const [tasks, setTasks] = useState([]);
 
-  const isNotDone = (task) => task.status === "notdone";
+  const isNotDone = (task) =>
+    task.status === "notdone" || task.status === "pending";
 
   const isRecurring = (task) => {
     return task.recurrence !== null && task.recurrence !== "";
@@ -19,7 +20,7 @@ export default function TasksSection({ title }) {
   const isDaily = (task) => task.recurrence === "daily";
 
   const getTaskKey = (task) =>
-    task.description?.trim()?.toLowerCase() || task.id;
+    task.seriesId || task.description?.trim()?.toLowerCase() || task.id;
 
   const getTimestampMillis = (timestamp) => {
     if (!timestamp) return 0;
@@ -86,11 +87,8 @@ export default function TasksSection({ title }) {
       return;
     }
 
-    const q = query(
-      collection(db, "Task"),
-      where("childID", "==", child.id),
-      where("status", "==", "notdone"),
-    );
+    // Fetch all tasks (not filtered by status) so we can show pending daily recurring tasks
+    const q = query(collection(db, "Task"), where("childID", "==", child.id));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const updatedTasks = snapshot.docs.map((doc) => ({
@@ -98,7 +96,12 @@ export default function TasksSection({ title }) {
         ...doc.data(),
       }));
 
-      setTasks(updatedTasks);
+      // Filter out completed and approved tasks
+      const incompleteTasks = updatedTasks.filter(
+        (task) => task.status !== "approved",
+      );
+
+      setTasks(incompleteTasks);
     });
 
     return () => unsubscribe();

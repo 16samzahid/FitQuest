@@ -1,5 +1,4 @@
 import {
-  addDoc,
   collection,
   doc,
   setDoc,
@@ -41,8 +40,9 @@ export const createParentAndChild = async (parentID) => {
     });
     console.log("Child created and linked to parent ID:", parentID);
 
-    // Create default daily tasks
-    await addDoc(collection(db, "Task"), {
+    // Create default daily tasks with seriesId
+    const task1Ref = doc(collection(db, "Task"));
+    await setDoc(task1Ref, {
       approvalNeeded: true,
       approvedBy: null,
       category: "Water",
@@ -50,14 +50,16 @@ export const createParentAndChild = async (parentID) => {
       coins: 5,
       completedAt: null,
       createdAt: Timestamp.now(),
-      description: "Drink a glass of water",
+      description: "Drink A Glass Of Water",
       dueDate: Timestamp.now(),
       recurrence: "daily",
+      seriesId: task1Ref.id,
       status: "notdone",
       xp: 5,
     });
 
-    await addDoc(collection(db, "Task"), {
+    const task2Ref = doc(collection(db, "Task"));
+    await setDoc(task2Ref, {
       approvalNeeded: true,
       approvedBy: null,
       category: "Food",
@@ -65,14 +67,16 @@ export const createParentAndChild = async (parentID) => {
       coins: 5,
       completedAt: null,
       createdAt: Timestamp.now(),
-      description: "Eat a piece of fruit",
+      description: "Eat A Piece Of Fruit",
       dueDate: Timestamp.now(),
       recurrence: "daily",
+      seriesId: task2Ref.id,
       status: "notdone",
       xp: 5,
     });
 
-    await addDoc(collection(db, "Task"), {
+    const task3Ref = doc(collection(db, "Task"));
+    await setDoc(task3Ref, {
       approvalNeeded: true,
       approvedBy: null,
       category: "Exercise",
@@ -80,9 +84,10 @@ export const createParentAndChild = async (parentID) => {
       coins: 5,
       completedAt: null,
       createdAt: Timestamp.now(),
-      description: "Do 5 star jumps",
+      description: "Do 5 Star Jumps",
       dueDate: Timestamp.now(),
       recurrence: "daily",
+      seriesId: task3Ref.id,
       status: "notdone",
       xp: 5,
     });

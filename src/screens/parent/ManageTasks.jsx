@@ -1,8 +1,9 @@
 import { useAppData } from "@/src/context/AppDataContext";
-import { Timestamp } from "firebase/firestore";
+import { collection, doc, Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import { Pressable, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { db } from "../../../config/FirebaseConfig";
 import AddTaskModal from "../../components/AddTaskModal";
 import TasksSection from "../../components/TasksSection";
 import { createTask } from "../../services/taskService";
@@ -58,7 +59,8 @@ const ManageTasks = () => {
       if (recurrence) {
         finalDueDate = getFirstDueDate(recurrence);
       }
-      await createTask({
+
+      const taskData = {
         approvalNeeded: approvalNeeded,
         approvedBy: null,
         category: category,
@@ -71,7 +73,17 @@ const ManageTasks = () => {
         recurrence: recurrence ?? null,
         status: "notdone",
         xp: 10,
-      });
+      };
+
+      // For recurring tasks, create a doc ref first so we can set seriesId
+      if (recurrence) {
+        const newTaskRef = doc(collection(db, "Task"));
+        taskData.seriesId = newTaskRef.id;
+        await createTask(taskData, newTaskRef);
+      } else {
+        // For one-time tasks, use regular addDoc
+        await createTask(taskData);
+      }
     } catch (err) {
       console.error("Failed creating task", err);
       alert("Failed to create task");

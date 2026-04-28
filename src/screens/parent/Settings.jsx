@@ -3,15 +3,15 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Checkbox from "expo-checkbox";
 import { signOut } from "firebase/auth";
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
   getDocs,
   query,
+  setDoc,
   Timestamp,
   updateDoc,
-  where,
+  where
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
@@ -101,11 +101,12 @@ const Settings = () => {
           ...docSnap.data(),
         }));
 
-        // Group tasks by description and keep only the latest instance of each
+        // Group tasks by seriesId (or fall back to description, then id) and keep only the latest instance of each
         const latestTasksMap = new Map();
 
         tasksList.forEach((task) => {
-          const key = task.description?.trim()?.toLowerCase() || task.id;
+          const key =
+            task.seriesId || task.description?.trim()?.toLowerCase() || task.id;
           const existingTask = latestTasksMap.get(key);
 
           const currentCreatedAt = task.createdAt?.toMillis?.() ?? 0;
@@ -237,12 +238,14 @@ const Settings = () => {
     }
 
     try {
-      await addDoc(collection(db, "Task"), {
+      const newTaskRef = doc(collection(db, "Task"));
+      await setDoc(newTaskRef, {
         description: taskDescription.trim(),
         category: taskCategory,
         coins: Number(taskCoins),
         childID: child.id,
         recurrence: "daily",
+        seriesId: newTaskRef.id,
         status: "notdone",
         approvalNeeded: taskApprovalNeeded,
         approvedBy: null,
