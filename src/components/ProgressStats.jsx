@@ -9,24 +9,6 @@ import { dateInRange, dayIndexFromDate, getWeekStart } from "../timeUtils";
 
 const weekdayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-// const getWeekStart = (date) => {
-//   const d = new Date(date);
-//   const day = d.getDay(); // Sunday=0
-//   const mondayOffset = day === 0 ? -6 : 1 - day;
-//   d.setDate(d.getDate() + mondayOffset);
-//   d.setHours(0, 0, 0, 0);
-//   return d;
-// };
-
-// const dayIndexFromDate = (d) => {
-//   const day = d.getDay();
-//   return day === 0 ? 6 : day - 1;
-// };
-
-// const dateInRange = (date, start, end) => {
-//   return date >= start && date <= end;
-// };
-
 export default function ProgressStats() {
   const { child } = useAppData();
   const { width } = useWindowDimensions();

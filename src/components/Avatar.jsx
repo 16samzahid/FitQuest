@@ -65,9 +65,16 @@ export default function Avatar({
   }
 
   return (
-    <View className="items-center self-center mt-4">
+    <View className="items-center self-center mt-8 relative">
       {showSpeechBubble && (
-        <View className="items-center z-10">
+        <View
+          className="items-center z-10"
+          style={{
+            position: "absolute",
+            top: -30,
+            left: -60,
+          }}
+        >
           <View className="max-w-[220px] rounded-2xl bg-white px-4 py-3 shadow">
             <Text className="text-center text-base font-semibold text-gray-700">
               {getEncouragementMessage()}
@@ -85,13 +92,13 @@ export default function Avatar({
               borderRightColor: "transparent",
               borderTopColor: "white",
               marginTop: -1,
-              marginRight: 40,
+              marginLeft: 40,
             }}
           />
         </View>
       )}
 
-      <View className="w-44 h-44 items-center justify-center relative">
+      <View className="w-44 h-44 items-center justify-center relative mt-6">
         <Image
           source={{ uri: pet.imageURL }}
           style={{ width, height }}

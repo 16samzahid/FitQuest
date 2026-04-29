@@ -1,4 +1,5 @@
 // Polyfill for AbortSignal.any() for React Native compatibility
+// This is needed because some versions of React Native do not support AbortSignal.any() natively.
 if (typeof AbortSignal !== "undefined" && !AbortSignal.any) {
   AbortSignal.any = function (signals) {
     const controller = new AbortController();
