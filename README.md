@@ -10,7 +10,43 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Create a new Firebase Project
+   To run this app with your own backend, you need to create a Firebase project and use your own Firebase configuration keys.
+   1. Go to the Firebase Console: https://console.firebase.google.com/
+   2. Click Add project.
+   3. Enter a project name, for example: fitquest-yourname
+   4. Ensure the Enable Gemini in Firebase is set to yes
+
+Once the project is created, you should see a dashboard with an option at the top to Add App. After clicking this you can
+
+1.  Select web
+2.  Give the app a nickname, for example: fitquest-app (you do not need to select hosting)
+3.  Click Register App
+
+Go to the project folder terminal and ensure firebase is installed using ```bash
+npm firebase -v
+
+````
+It should be installed as it is a dependency, but if it is not installed, make sure it is installed using
+```bash
+npm install firebase
+````
+
+You should now be able to see all your needed keys to use Firebase.
+Please copy the keys into the .env file under in the following order:
+
+EXPO_PUBLIC_FIREBASE_API_KEY=apiKey
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=authDomain
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=projectId
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=storageBucket
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=messagingSenderId
+EXPO_PUBLIC_FIREBASE_APP_ID=appId
+
+3. Go to the console and click on Security, then Authentication, then click on Email/Password and ensure it is enabled.
+
+4. Go to Databases and Storage on the left, click on Firestore, create a new database, ensuring it is in Test Mode
+
+5. Start the app
 
    ```bash
    npx expo start
@@ -23,28 +59,15 @@ In the output, you'll find options to open the app in a
 - [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+For the duration of this project, Expo Go was used, with early development sometimes using web. The Expo Go app must be downloaded the mobile device intending to be used in order to run it.
 
-## Get a fresh project
-
-When you're ready, run:
+Sometimes the development server can give an npm error, in which case pressing r in the terminal can fix the error by reloading the server.
+If this does not work, you can try
 
 ```bash
-npm run reset-project
+  npx expo start -c
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+This command clears the bundler cache, and is worth trying if reloading is not working.
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Unfortunately, since the images require the assets to be uploaded to the backend, there is no way to view them using a personal new firebase ptoject without extra setup, although the main task functionality should still work
