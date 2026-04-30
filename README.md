@@ -23,23 +23,31 @@ Once the project is created, you should see a dashboard with an option at the to
 2.  Give the app a nickname, for example: fitquest-app (you do not need to select hosting)
 3.  Click Register App
 
-Go to the project folder terminal and ensure firebase is installed using ```bash
-npm firebase -v
+Go to the project folder terminal and ensure firebase is installed using
 
-````
+```bash
+npm firebase -v
+```
+
 It should be installed as it is a dependency, but if it is not installed, make sure it is installed using
+
 ```bash
 npm install firebase
-````
+```
 
 You should now be able to see all your needed keys to use Firebase.
 Please copy the keys into the .env file under in the following order:
 
 EXPO_PUBLIC_FIREBASE_API_KEY=apiKey
+
 EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=authDomain
+
 EXPO_PUBLIC_FIREBASE_PROJECT_ID=projectId
+
 EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=storageBucket
+
 EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=messagingSenderId
+
 EXPO_PUBLIC_FIREBASE_APP_ID=appId
 
 3. Go to the console and click on Security, then Authentication, then click on Email/Password and ensure it is enabled.
