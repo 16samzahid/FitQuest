@@ -11,7 +11,7 @@ import {
   setDoc,
   Timestamp,
   updateDoc,
-  where
+  where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
@@ -40,6 +40,7 @@ const Settings = () => {
 
   const [newName, setNewName] = useState(child?.name || "");
   const [newPin, setNewPin] = useState(parent?.pin || "");
+  const [pinError, setPinError] = useState("");
 
   // Daily tasks state
   const [dailyTasks, setDailyTasks] = useState([]);
@@ -176,7 +177,13 @@ const Settings = () => {
   };
 
   const handleSavePin = async () => {
+    if (!/^[0-9]{4}$/.test(newPin)) {
+      setPinError("PIN must be exactly 4 digits.");
+      return;
+    }
+
     try {
+      setPinError("");
       await editParentPin(parent.id, newPin);
       setPinModal(false);
     } catch (error) {
@@ -541,16 +548,25 @@ const Settings = () => {
 
             <TextInput
               value={newPin}
-              onChangeText={setNewPin}
+              onChangeText={(value) => {
+                setNewPin(value);
+                setPinError("");
+              }}
               keyboardType="numeric"
               secureTextEntry
               maxLength={4}
               className="border border-gray-200 rounded-lg p-3 mb-4 text-lg"
             />
+            {pinError ? (
+              <Text className="text-red mb-3">{pinError}</Text>
+            ) : null}
 
             <View className="flex-row justify-end">
               <Pressable
-                onPress={() => setPinModal(false)}
+                onPress={() => {
+                  setPinError("");
+                  setPinModal(false);
+                }}
                 className="mr-3 px-4 py-2 bg-gray-200 rounded-full"
               >
                 <Text>Cancel</Text>

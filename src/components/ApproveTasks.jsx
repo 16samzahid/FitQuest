@@ -61,7 +61,7 @@ export default function ApproveTasks() {
         </ScrollView>
       </View>
 
-      {/* 🔵 Help Modal */}
+      {/* Help Modal */}
       <Modal
         visible={helpVisible}
         transparent

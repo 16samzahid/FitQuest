@@ -17,6 +17,7 @@ import {
   useState,
 } from "react";
 import { db } from "../../config/FirebaseConfig";
+import { reconcileRecurringTasks } from "../services/taskService";
 import { useAuth } from "./AuthContext";
 
 const AppDataContext = createContext(null);
@@ -99,6 +100,8 @@ export function AppDataProvider({ children }) {
         };
 
         setChild(childData);
+
+        await reconcileRecurringTasks(childData.id);
 
         // load pet colour image
         const petData = childData.pet;

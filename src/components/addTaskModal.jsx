@@ -23,6 +23,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
   const [approvalNeeded, setApprovalNeeded] = useState(true);
   const [category, setCategory] = useState(null);
   const [coins, setCoins] = useState("");
+  const [validationError, setValidationError] = useState("");
 
   // due date
   const [dueDate, setDueDate] = useState(null);
@@ -124,7 +125,32 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
   };
 
   const handleCreate = () => {
-    if (!description.trim()) return;
+    setValidationError("");
+
+    if (!child) {
+      setValidationError("No child selected.");
+      return false;
+    }
+    if (!description.trim()) {
+      setValidationError("Task description cannot be empty.");
+      return false;
+    }
+    if (!category) {
+      setValidationError("Please select a category.");
+      return false;
+    }
+    if (!coins) {
+      setValidationError("Please select a coin reward.");
+      return false;
+    }
+    if (isRecurring && selectedDay === null) {
+      setValidationError("Please select a day for the recurring task.");
+      return false;
+    }
+    if (!isRecurring && !dueDate) {
+      setValidationError("Please select a due date for one-time tasks.");
+      return false;
+    }
 
     onCreate({
       description: description.trim(),
@@ -146,6 +172,9 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
     setSelectedDay(null);
     setIsRecurring(false);
     setShowHistory(false);
+    setValidationError("");
+
+    return true;
   };
 
   return (
@@ -155,6 +184,12 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
           <Text className="text-xl font-bold text-[#150F59] mb-2">
             Create Task
           </Text>
+
+          {validationError ? (
+            <View className="bg-red-50 border border-red rounded-lg p-3 mb-4">
+              <Text className="text-red">{validationError}</Text>
+            </View>
+          ) : null}
 
           <View className="flex-row items-center justify-between mb-4">
             {completedTasks.length > 0 && (
@@ -383,6 +418,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
                 setDueDate(null);
                 setSelectedDay(null);
                 setIsRecurring(false);
+                setValidationError("");
 
                 onClose();
               }}
@@ -393,9 +429,9 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
             <Pressable
               className="px-4 py-2 rounded-full bg-indigo-600"
               onPress={() => {
-                handleCreate();
-
-                onClose();
+                if (handleCreate()) {
+                  onClose();
+                }
               }}
             >
               <Text className="text-white text-lg">Create Task</Text>

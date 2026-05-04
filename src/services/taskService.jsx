@@ -49,7 +49,6 @@ const getNextDueDate = (recurrenceDay, fromDate) => {
 };
 
 export const createTask = async (taskData, docRef = null) => {
-  // console.log(taskData.recurrence);
   // If a docRef is provided (for recurring tasks with seriesId), use setDoc
   if (docRef) {
     await setDoc(docRef, taskData);
@@ -195,6 +194,85 @@ export const approveTask = async (taskId) => {
     }
   } catch (error) {
     console.error("Error approving task:", error);
+  }
+};
+
+const getTimestampMillis = (timestamp) => {
+  if (!timestamp) return 0;
+  if (typeof timestamp.toMillis === "function") return timestamp.toMillis();
+  if (typeof timestamp.toDate === "function")
+    return timestamp.toDate().getTime();
+  return new Date(timestamp).getTime();
+};
+
+export const reconcileRecurringTasks = async (childID) => {
+  if (!childID) return;
+
+  try {
+    // Fetch all tasks for the child (no composite index needed)
+    const q = query(collection(db, "Task"), where("childID", "==", childID));
+
+    const snapshot = await getDocs(q);
+    const allTasks = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    // Filter for recurring tasks client-side
+    const tasks = allTasks.filter(
+      (task) => task.recurrence && task.recurrence !== null,
+    );
+
+    const now = new Date();
+    const latestBySeries = new Map();
+
+    tasks.forEach((task) => {
+      const seriesId = task.seriesId || task.id;
+      const existing = latestBySeries.get(seriesId);
+      const dueMillis = getTimestampMillis(task.dueDate);
+
+      if (!existing || dueMillis > getTimestampMillis(existing.dueDate)) {
+        latestBySeries.set(seriesId, task);
+      }
+    });
+
+    for (const task of latestBySeries.values()) {
+      if (!task.dueDate || task.status === "approved") continue;
+
+      const dueDate = task.dueDate.toDate
+        ? task.dueDate.toDate()
+        : new Date(task.dueDate);
+      if (dueDate >= now) continue;
+
+      const seriesId = task.seriesId || task.id;
+      const hasFuture = tasks.some(
+        (t) =>
+          (t.seriesId || t.id) === seriesId &&
+          getTimestampMillis(t.dueDate) > getTimestampMillis(task.dueDate),
+      );
+
+      if (hasFuture) continue;
+
+      const nextDueDate = getNextDueDate(task.recurrence, task.dueDate);
+
+      await addDoc(collection(db, "Task"), {
+        approvalNeeded: task.approvalNeeded,
+        approvedBy: null,
+        category: task.category,
+        childID: task.childID,
+        coins: task.coins,
+        completedAt: null,
+        createdAt: Timestamp.now(),
+        description: task.description,
+        dueDate: Timestamp.fromDate(nextDueDate),
+        recurrence: task.recurrence,
+        seriesId: seriesId,
+        status: "notdone",
+        xp: task.xp,
+      });
+    }
+  } catch (error) {
+    console.error("Error reconciling recurring tasks:", error);
   }
 };
 
