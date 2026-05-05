@@ -1,3 +1,4 @@
+// User service handles account setup, child profile creation, and parent/child record updates.
 import {
   collection,
   doc,
@@ -8,6 +9,7 @@ import {
 import { Alert } from "react-native";
 import { db } from "../../config/FirebaseConfig";
 
+// Create a new parent account with a linked child profile and default daily tasks.
 export const createParentAndChild = async (parentID) => {
   console.log("Creating parent and child with parentID:", parentID);
   try {
@@ -98,6 +100,7 @@ export const createParentAndChild = async (parentID) => {
   }
 };
 
+// Update the child's display name in Firestore and notify the parent on success.
 export const editChildName = async (childID, newName) => {
   try {
     await updateDoc(doc(db, "Child", childID), {
@@ -110,6 +113,7 @@ export const editChildName = async (childID, newName) => {
   }
 };
 
+// Update the parent's secure PIN used for switching into parent mode.
 export const editParentPin = async (parentID, newPin) => {
   try {
     await updateDoc(doc(db, "Parent", parentID), {

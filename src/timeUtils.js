@@ -1,4 +1,7 @@
+// Date helpers used across task filtering and recurring task logic.
+// These utilities normalize dates to the local calendar and compare task due dates.
 export const getWeekStart = (date) => {
+  // Return the Monday for the week containing the given date.
   const d = new Date(date);
   const day = d.getDay(); // Sunday=0
   const mondayOffset = day === 0 ? -6 : 1 - day;
@@ -8,18 +11,20 @@ export const getWeekStart = (date) => {
 };
 
 export const dayIndexFromDate = (d) => {
+  // Convert JS Sunday-based day index to Monday-based 0..6 format.
   const day = d.getDay();
   return day === 0 ? 6 : day - 1;
 };
 
 export const dateInRange = (date, start, end) => {
+  // Check whether a date falls within an inclusive date range.
   return date >= start && date <= end;
 };
 
 export const isDueToday = (task) => {
   const today = new Date();
 
-  // check exact date match
+  // Check whether task.dueDate is exactly today.
   if (task.dueDate) {
     const due = task.dueDate.toDate();
 
@@ -45,13 +50,14 @@ const weekdayMap = {
 };
 
 export const getNextDueDate = (recurrenceDay, fromDate) => {
+  // Calculate the next due date for a recurring task starting from a base date.
   const base = fromDate?.toDate ? fromDate.toDate() : new Date(fromDate);
   base.setHours(0, 0, 0, 0);
   const todayIndex = base.getDay();
   const targetIndex = weekdayMap[recurrenceDay];
   let diff = targetIndex - todayIndex;
 
-  // move forward at least 1 week
+  // Move forward at least one week if the target day is today or in the past.
   if (diff <= 0) {
     diff += 7;
   }

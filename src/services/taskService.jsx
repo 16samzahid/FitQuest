@@ -15,6 +15,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../config/FirebaseConfig";
 
+// Map weekday names to JS day indexes for recurring task calculations.
 const weekdayMap = {
   Sunday: 0,
   Monday: 1,
@@ -58,6 +59,7 @@ export const createTask = async (taskData, docRef = null) => {
   return await addDoc(collection(db, "Task"), taskData);
 };
 
+// Mark a previously pending task as not done so the child can retry it.
 export const rejectTask = async (taskId) => {
   try {
     console.log(`Task ${taskId} rejected`);
@@ -99,6 +101,7 @@ export const completeTask = async (taskId) => {
   }
 };
 
+// Approve a task and update the child's stats, XP, coins, and next recurrence if needed.
 export const approveTask = async (taskId) => {
   try {
     console.log(`Task ${taskId} approved`);
@@ -205,6 +208,8 @@ const getTimestampMillis = (timestamp) => {
   return new Date(timestamp).getTime();
 };
 
+// Ensure recurring tasks are recreated when their due dates pass.
+// This function keeps the child task list up to date by generating the next instance.
 export const reconcileRecurringTasks = async (childID) => {
   if (!childID) return;
 
@@ -276,6 +281,7 @@ export const reconcileRecurringTasks = async (childID) => {
   }
 };
 
+// Edit an existing task, preserving recurrence metadata and updating due dates.
 export const editTask = async (taskId, updatedData) => {
   try {
     const taskRef = doc(db, "Task", taskId);
@@ -347,6 +353,7 @@ export const getCompletedTasks = async (childID) => {
     return [];
   }
 };
+// Listen to pending approval tasks for the parent dashboard badge state.
 export const listenToPendingTasks = (childID, callback) => {
   if (!childID) return () => {};
 

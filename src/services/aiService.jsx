@@ -1,13 +1,15 @@
+// AI service uses Firebase's Gemini backend for task suggestion generation.
 import {
-    getAI,
-    getGenerativeModel,
-    GoogleAIBackend,
-    Schema,
+  getAI,
+  getGenerativeModel,
+  GoogleAIBackend,
+  Schema,
 } from "firebase/ai";
 import { app } from "../../config/FirebaseConfig";
 
 const ai = getAI(app, { backend: new GoogleAIBackend() });
 
+// Define the JSON schema that the AI model should return.
 const jsonSchema = Schema.object({
   properties: {
     description: Schema.string(),
@@ -29,6 +31,8 @@ export async function generateTaskSuggestion(child, completedTasks = []) {
     throw new Error("Child data is required for AI suggestion");
   }
 
+  // Build a prompt for the Gemini model that includes child state and completed tasks.
+  // The response is constrained to a small JSON object so parsing is predictable.
   const prompt = `
 Suggest one child-friendly task for a health and exercise app.
 

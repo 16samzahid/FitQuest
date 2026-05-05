@@ -15,6 +15,8 @@ import {
   rejectTask,
 } from "./taskService";
 
+// Mock Firestore operations so taskService unit tests focus on behavior
+// and do not perform real network or database calls.
 jest.mock("firebase/firestore", () => ({
   addDoc: jest.fn(),
   collection: jest.fn(),
@@ -34,6 +36,7 @@ jest.mock("../../config/FirebaseConfig", () => ({
 }));
 
 describe("taskService", () => {
+  // Shared setup for taskService tests: clear mocks and suppress console output.
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, "log").mockImplementation(() => {});
@@ -46,6 +49,8 @@ describe("taskService", () => {
 
   describe("createTask", () => {
     it("should call addDoc with correct parameters", async () => {
+      // Ensure a new task is created in the Firestore Task collection
+      // with the data passed into createTask.
       const taskData = {
         title: "Test Task",
         description: "This is a test task",
@@ -66,6 +71,8 @@ describe("taskService", () => {
 
   describe("rejectTask", () => {
     it("should update task status to notdone", async () => {
+      // Verify that rejecting a task updates its status to notdone
+      // so the child can complete it again.
       doc.mockReturnValue("mockTaskRef");
       updateDoc.mockResolvedValue(undefined);
 
@@ -80,6 +87,8 @@ describe("taskService", () => {
 
   describe("deleteTask", () => {
     it("should delete the task", async () => {
+      // Confirm that deleteTask removes the task document
+      // from Firestore using the task ID.
       doc.mockReturnValue("mockTaskRef");
       deleteDoc.mockResolvedValue(undefined);
 
@@ -92,6 +101,8 @@ describe("taskService", () => {
 
   describe("completeTask", () => {
     it("should update task status to pending if approval is needed", async () => {
+      // When a task requires parent approval, completing it should
+      // set status to pending rather than approved.
       const mockTask = {
         approvalNeeded: true,
       };
@@ -107,6 +118,8 @@ describe("taskService", () => {
     });
 
     it("should call approveTask if approval is not needed", async () => {
+      // If no approval is required, completing the task should
+      // mark it approved and record the completion timestamp.
       const mockTask = {
         approvalNeeded: false,
       };
@@ -125,6 +138,8 @@ describe("taskService", () => {
 
   describe("approveTask", () => {
     it("should update task status to approved and set completedAt", async () => {
+      // Approving a task should set its status to approved and
+      // assign the current timestamp to completedAt.
       const mockTask = {
         coins: 10,
         childID: "child123",
@@ -143,6 +158,8 @@ describe("taskService", () => {
 
   describe("editTask", () => {
     it("should update task with edited fields", async () => {
+      // Verify that editing a task sends the updated fields to Firestore,
+      // including changing due date and recurrence settings.
       doc.mockReturnValue("mockTaskRef");
       getDoc.mockResolvedValue({
         data: () => ({

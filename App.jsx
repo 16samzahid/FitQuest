@@ -27,18 +27,18 @@ import "./src/global.css";
 import Navigator from "./src/navigation/Navigator";
 import Login from "./src/screens/Login";
 import Signup from "./src/screens/Signup";
-import Welcome from "./src/screens/Welcome";
-
 const AuthStack = createNativeStackNavigator();
 
 const AppContent = () => {
   const { user, loading } = useAuth();
 
+  // Wait for the authentication state to resolve before rendering navigation.
   if (loading) return null; // or splash
 
   return (
     <NavigationContainer>
       {user ? (
+        // Authenticated users see the main app navigator with context layers.
         <ModeProvider>
           <AppDataProvider>
             <Navigator />
@@ -48,7 +48,6 @@ const AppContent = () => {
         <AuthStack.Navigator screenOptions={{ headerShown: false }}>
           <AuthStack.Screen name="Login" component={Login} />
           <AuthStack.Screen name="Signup" component={Signup} />
-          <AuthStack.Screen name="Welcome" component={Welcome} />
         </AuthStack.Navigator>
       )}
     </NavigationContainer>
@@ -56,6 +55,7 @@ const AppContent = () => {
 };
 
 export default function App() {
+  // Root app component wraps authentication and safe area providers.
   return (
     <AuthProvider>
       <SafeAreaProvider>

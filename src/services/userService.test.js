@@ -6,6 +6,7 @@ import {
   editParentPin,
 } from "./userService";
 
+// Mock React Native and Firestore dependencies so userService tests remain isolated.
 jest.mock("react-native", () => ({
   Alert: {
     alert: jest.fn(),
@@ -30,6 +31,7 @@ jest.mock("../../config/FirebaseConfig", () => ({
 jest.spyOn(Alert, "alert").mockImplementation(() => {});
 
 describe("userService", () => {
+  // Shared setup for userService tests: clear mocks and avoid console noise.
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, "log").mockImplementation(() => {});
@@ -42,6 +44,8 @@ describe("userService", () => {
 
   describe("createParentAndChild", () => {
     it("creates parent, child and three default tasks", async () => {
+      // Verify that creating a new parent record also creates
+      // a child profile and three default tasks in Firestore.
       const parentID = "parent123";
 
       doc.mockImplementation((...args) => {
@@ -127,6 +131,8 @@ describe("userService", () => {
 
   describe("editChildName", () => {
     it("updates child name", async () => {
+      // Ensure editing a child name updates the Child record
+      // and triggers a success alert.
       doc.mockReturnValue("mockChildRef");
       updateDoc.mockResolvedValue(undefined);
 
@@ -147,6 +153,7 @@ describe("userService", () => {
 
   describe("editParentPin", () => {
     it("updates parent PIN", async () => {
+      // Confirm that changing the parent's PIN updates the Parent document.
       doc.mockReturnValue("mockParentRef");
       updateDoc.mockResolvedValue(undefined);
 
