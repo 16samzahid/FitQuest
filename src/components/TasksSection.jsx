@@ -10,6 +10,7 @@ export default function TasksSection({ title }) {
   const { child } = useAppData();
   const [tasks, setTasks] = useState([]);
 
+  // Helper functions to categorize tasks by status and recurrence.
   const isNotDone = (task) =>
     task.status === "notdone" || task.status === "pending";
 
@@ -53,12 +54,15 @@ export default function TasksSection({ title }) {
     return Array.from(latestTasksMap.values());
   };
 
+  // Filter tasks based on the section title to show relevant ones.
   const filteredTasks = useMemo(() => {
     if (title === "Today's Tasks") {
+      // Show tasks due today that are not yet completed
       return tasks.filter(isDueToday).filter(isNotDone);
     }
 
     if (title === "Upcoming Tasks") {
+      // Show future non-recurring tasks that are not done
       return tasks
         .filter((t) => t.dueDate && t.dueDate.toDate() > new Date())
         .filter((t) => !isRecurring(t))
@@ -66,6 +70,7 @@ export default function TasksSection({ title }) {
     }
 
     if (title === "Repeating Tasks") {
+      // Show recurring tasks, keeping only the latest daily ones to avoid duplicates
       const recurringTasks = tasks.filter(isRecurring).filter(isNotDone);
 
       const dailyTasks = recurringTasks.filter(isDaily);

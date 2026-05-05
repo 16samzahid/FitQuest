@@ -66,6 +66,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
     "Saturday",
   ];
 
+  // load completed tasks when modal opens or childID changes
   useEffect(() => {
     if (visible && childID) {
       const fetchCompletedTasks = async () => {
@@ -76,6 +77,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
     }
   }, [visible, childID]);
 
+  // reset form when modal closes
   const selectFromHistory = (task) => {
     setDescription(task.description);
     setApprovalNeeded(task.approvalNeeded);
@@ -89,6 +91,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
     setShowHistory(false);
   };
 
+  // toggle weekday selection for recurring tasks
   const toggleDay = (index) => {
     if (selectedDay === index) {
       setSelectedDay(null);
@@ -97,6 +100,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
     }
   };
 
+  // get the ai task suggestion and use it to set fields in form
   const getAISuggestion = async () => {
     try {
       if (!child) {
@@ -124,6 +128,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
     }
   };
 
+  // validate form and call onCreate prop with task data
   const handleCreate = () => {
     setValidationError("");
 
@@ -152,6 +157,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
       return false;
     }
 
+    // prop that calls parent function to create task in firestore
     onCreate({
       description: description.trim(),
       approvalNeeded,
@@ -185,6 +191,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
             Create Task
           </Text>
 
+          {/* Validation error message */}
           {validationError ? (
             <View className="bg-red-50 border border-red rounded-lg p-3 mb-4">
               <Text className="text-red">{validationError}</Text>
@@ -203,6 +210,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
               </Pressable>
             )}
 
+            {/* AI Suggestion Button */}
             <Pressable
               onPress={getAISuggestion}
               disabled={aiLoading}
@@ -218,6 +226,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
             </Pressable>
           </View>
 
+          {/* Completed tasks history */}
           {showHistory && (
             <View className="mb-4 max-h-48">
               <Text className="text-lg font-semibold mb-2">
@@ -237,6 +246,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
                     return uniqueTasks;
                   }, [])
                   .map((task) => (
+                    // map each history task to a pressable item that fills form when pressed
                     <Pressable
                       key={task.id}
                       onPress={() => selectFromHistory(task)}
@@ -285,14 +295,6 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
           />
 
           {/* Coins */}
-          {/* <TextInput
-            value={coins}
-            onChangeText={handleCoinsChange}
-            placeholder="Coins Reward (Suggested: 10)"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
-            className="border border-gray-200 rounded-lg p-3 mb-4 text-lg"
-          /> */}
           <Dropdown
             data={coinOptions}
             labelField="label"

@@ -1,4 +1,5 @@
 import { Modal, Pressable, Text, View } from "react-native";
+// Simple celebratory modal for when the child levels up
 
 export default function LevelUpModal({ visible, level, onClose }) {
   return (

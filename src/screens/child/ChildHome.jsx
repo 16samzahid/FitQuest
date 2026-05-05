@@ -103,7 +103,7 @@ export default function ChildHome() {
       <Text className="text-2xl font-bold text-center text-indigo-700">
         Welcome {loading ? "..." : child ? child.name : "Guest"}!
       </Text>
-      {/* Avatar */}
+      {/* Avatar component shows the pet, mood, and speech bubble. */}
       <View className="flex-row justify-center justify-evenly">
         <Avatar
           health={child?.health ?? 0}
@@ -113,19 +113,17 @@ export default function ChildHome() {
         />
       </View>
 
-      {/*Summary Card */}
-      {/* Insert a card with summary for example 1/3 tasks done */}
-
-      {/* Level */}
+      {/* Pet stats card displays health, hunger, and happiness values. */}
       <PetStatsCard
         health={child?.health ?? 0}
         hunger={child?.hunger ?? 0}
         happiness={child?.happiness ?? 0}
         loading={loading}
       />
+      {/* Completed task summary for today. */}
       <TasksCompleted />
 
-      {/* Tasks / Cards */}
+      {/* Main task list for the child. */}
       <Tasks />
     </SafeAreaView>
   );

@@ -11,6 +11,8 @@ export default function TaskCard({
   xp = 10,
   onComplete,
 }) {
+  // Animated value for sliding the card away on completion
+  // also play congrats sound effect
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   const playSound = async () => {

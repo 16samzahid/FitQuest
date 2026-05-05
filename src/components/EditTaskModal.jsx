@@ -66,6 +66,7 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
     setSelectedDay(task.recurrence ? weekdays.indexOf(task.recurrence) : null);
   }, [task]);
 
+  // helper to toggle selected day for recurring tasks
   const toggleDay = (index) => {
     if (selectedDay === index) {
       setSelectedDay(null);
@@ -74,6 +75,7 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
     }
   };
 
+  // Runs when the edit button is pressed
   const handleEdit = () => {
     if (!description.trim()) return;
 
@@ -91,15 +93,6 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
       recurrence:
         isRecurring && selectedDay !== null ? weekdays[selectedDay] : null,
     });
-
-    // reset form
-    // setDescription("");
-    // setApprovalNeeded(true);
-    // setCategory(null);
-    // setCoins("");
-    // setDueDate(null);
-    // setSelectedDay(null);
-    // setIsRecurring(false);
   };
 
   return (

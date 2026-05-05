@@ -18,6 +18,7 @@ export default function ApproveTasks() {
       return;
     }
 
+    // listen in real-time to pending tasks for this child
     const q = query(
       collection(db, "Task"),
       where("childID", "==", child.id),
@@ -41,15 +42,18 @@ export default function ApproveTasks() {
             Tasks Awaiting Approval
           </Text>
 
+          {/* Help Button */}
           <Pressable onPress={() => setHelpVisible(true)}>
             <FontAwesome name="question-circle" size={24} color="black" />
           </Pressable>
         </View>
 
+        {/*show list of pending tasks*/}
         <ScrollView
           className="mt-4 p-2 rounded-t-[40px]"
           showsVerticalScrollIndicator={false}
         >
+          {/* map each task to an approve card */}
           {tasks.map((task) => (
             <ApproveTaskCard
               key={task.id}

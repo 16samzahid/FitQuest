@@ -37,6 +37,7 @@ export function AppDataProvider({ children }) {
     Mood logic
   */
   const getMoodFromStats = (health, hunger, happiness) => {
+    // Determine the pet's mood based on its current stats
     // all high → happy
     if (health >= 60 && hunger >= 60 && happiness >= 60) {
       return "happy";
@@ -62,12 +63,13 @@ export function AppDataProvider({ children }) {
     initial fetch
   */
   const fetchData = useCallback(async () => {
+    // Fetch parent, child, pet, and accessory data from Firestore on app load
     if (!user) return;
 
     setLoading(true);
 
     try {
-      // parent
+      // Fetch parent data
       const parentSnap = await getDoc(doc(db, "Parent", user.uid));
 
       if (!parentSnap.exists()) {
@@ -83,7 +85,7 @@ export function AppDataProvider({ children }) {
 
       setParent(parentData);
 
-      // child
+      // Fetch child data associated with this parent
       const q = query(
         collection(db, "Child"),
         where("parentID", "==", parentData.id),
@@ -103,7 +105,7 @@ export function AppDataProvider({ children }) {
 
         await reconcileRecurringTasks(childData.id);
 
-        // load pet colour image
+        // Load pet colour and mood images
         const petData = childData.pet;
 
         if (petData) {
@@ -119,7 +121,7 @@ export function AppDataProvider({ children }) {
             }
           }
 
-          // load mood image
+          // Load mood image
           let moodImageURL = null;
 
           if (petData.mood) {
@@ -137,7 +139,7 @@ export function AppDataProvider({ children }) {
           });
         }
 
-        // accessories (correct childID used)
+        // Fetch child's accessories
         const accessoryQuery = query(
           collection(db, "ChildAccessory"),
           where("childID", "==", childData.id),
@@ -163,6 +165,7 @@ export function AppDataProvider({ children }) {
     stat decay
   */
   const applyPetStatDecay = async (childData) => {
+    // Reduce pet stats over time if the child hasn't been active
     if (!childData?.lastStatusUpdate) return;
 
     const now = new Date();
@@ -193,6 +196,7 @@ export function AppDataProvider({ children }) {
     realtime listeners
   */
   useEffect(() => {
+    // Set up real-time listeners for parent and child data changes
     fetchData();
 
     let unsubscribeChild = null;
@@ -200,7 +204,7 @@ export function AppDataProvider({ children }) {
     let unsubscribeParent = null;
 
     if (user) {
-      // parent realtime
+      // Listen for parent data updates
       unsubscribeParent = onSnapshot(
         doc(db, "Parent", user.uid),
 
@@ -214,7 +218,7 @@ export function AppDataProvider({ children }) {
         },
       );
 
-      // child realtime
+      // Listen for child data updates
       const q = query(
         collection(db, "Child"),
         where("parentID", "==", user.uid),
@@ -247,6 +251,7 @@ export function AppDataProvider({ children }) {
     update pet images + mood when child changes
   */
   useEffect(() => {
+    // Load pet images and update mood when child data changes
     if (child && lastSeenLevel === null) {
       setLastSeenLevel(child.level ?? 0);
     }
@@ -257,6 +262,7 @@ export function AppDataProvider({ children }) {
     }
 
     const loadPetResources = async () => {
+      // Load and update pet colour and mood images
       if (!child || !child.pet) {
         setPet(null);
 
@@ -267,14 +273,14 @@ export function AppDataProvider({ children }) {
 
       const petData = child.pet;
 
-      // determine correct mood
+      // Determine the correct mood based on current stats
       const correctMood = getMoodFromStats(
         child.health,
         child.hunger,
         child.happiness,
       );
 
-      // update firestore ONLY if changed
+      // Update mood in Firestore if it has changed
       if (petData.mood !== correctMood) {
         await updateDoc(doc(db, "Child", child.id), {
           "pet.mood": correctMood,
@@ -283,7 +289,7 @@ export function AppDataProvider({ children }) {
         petData.mood = correctMood;
       }
 
-      // colour image
+      // Fetch colour image URL
       let imageURL = null;
 
       if (petData.colourID) {
@@ -294,7 +300,7 @@ export function AppDataProvider({ children }) {
         }
       }
 
-      // mood image
+      // Fetch mood image URL
       let moodImageURL = null;
 
       if (petData.mood) {
@@ -321,6 +327,7 @@ export function AppDataProvider({ children }) {
     realtime accessories
   */
   useEffect(() => {
+    // Listen for real-time updates to the child's accessories
     if (!child?.id) {
       setAccessories([]);
 

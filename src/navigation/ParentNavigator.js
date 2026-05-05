@@ -10,10 +10,13 @@ import { listenToPendingTasks } from "../services/taskService";
 const Tab = createBottomTabNavigator();
 
 export default function ParentNavigator() {
+  // Bottom tab navigator for parent mode with Dashboard, Tasks, and Settings
   const { child } = useAppData();
   const [hasPendingTasks, setHasPendingTasks] = useState(false);
 
   useEffect(() => {
+    // Keep the parent tab route aware of pending tasks for this child.
+    // This hook updates the badge state when the child's pending task count changes.
     if (!child?.id) return;
 
     const unsubscribe = listenToPendingTasks(child.id, setHasPendingTasks);
@@ -25,14 +28,17 @@ export default function ParentNavigator() {
     <Tab.Navigator
       initialRouteName="Dashboard"
       screenOptions={({ route }) => ({
+        // Hide the native header because the tab navigator handles top-level layout.
         headerShown: false,
 
+        // Style the tab bar consistently across parent screens.
         tabBarStyle: {
           backgroundColor: "#302ECC",
           borderTopWidth: 0,
         },
 
         tabBarIcon: ({ color }) => {
+          // Map each parent tab route to a FontAwesome icon name.
           const icons = {
             Dashboard: "home",
             Tasks: "tasks",
@@ -57,6 +63,7 @@ export default function ParentNavigator() {
         name="Dashboard"
         component={ParentDashboard}
         options={{
+          // Show a red badge if there are pending tasks
           tabBarBadge: hasPendingTasks ? "" : undefined,
           tabBarBadgeStyle: {
             backgroundColor: "#FF0000",

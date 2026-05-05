@@ -31,6 +31,7 @@ import { useMode } from "../../context/ModeContext";
 import { editChildName, editParentPin } from "../../services/userService";
 
 const Settings = () => {
+  // Parent settings screen for updating child name, parent PIN, and daily task rules.
   const { setMode } = useMode();
   const { child, parent } = useAppData();
 
@@ -42,7 +43,7 @@ const Settings = () => {
   const [newPin, setNewPin] = useState(parent?.pin || "");
   const [pinError, setPinError] = useState("");
 
-  // Daily tasks state
+  // Daily tasks state is used to display and manage recurring tasks from settings.
   const [dailyTasks, setDailyTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
 
@@ -339,6 +340,7 @@ const Settings = () => {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       <View className="flex-1">
+        {/* Swap back to child mode when the parent is done in settings. */}
         <Pressable
           onPress={() => setMode("child")}
           style={{
@@ -390,6 +392,7 @@ const Settings = () => {
           </View>
 
           {/* PARENT PIN */}
+          {/* Show and edit the secure parent PIN used for switching modes. */}
           <View className="bg-[#ECEBFF] p-4 rounded-2xl mb-5">
             <Text className="text-[#150F59] text-lg font-bold mb-3">
               Parent PIN
@@ -420,6 +423,7 @@ const Settings = () => {
           </View>
 
           {/* DAILY TASK MANAGEMENT */}
+          {/* Manage recurring daily tasks and edit/delete existing daily tasks. */}
           <View className="bg-[#ECEBFF] p-4 rounded-2xl mb-5">
             <Text className="text-[#150F59] text-lg font-bold mb-3">
               Daily Tasks
@@ -494,6 +498,7 @@ const Settings = () => {
           </View>
 
           {/* LOGOUT */}
+          {/* Sign out of the parent account when finished managing settings. */}
           <View className="mt-4 pb-6">
             <Pressable
               onPress={handleSignOut}

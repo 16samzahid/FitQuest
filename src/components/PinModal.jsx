@@ -39,11 +39,13 @@ export default function PinModal({ visible, onClose, onSuccess }) {
     setCheckingPassword(false);
   };
 
+  // helper to close modal and reset all state
   const closeEverything = () => {
     resetAll();
     onClose();
   };
 
+  // helper to handle changes in each PIN input box
   const handleChange = (value, index) => {
     if (!/^\d?$/.test(value)) return;
 
@@ -57,12 +59,14 @@ export default function PinModal({ visible, onClose, onSuccess }) {
     }
   };
 
+  // helper to handle backspace and move focus backwards
   const handleKeyPress = (e, index) => {
     if (e.nativeEvent.key === "Backspace" && !pin[index] && index > 0) {
       inputs.current[index - 1]?.focus();
     }
   };
 
+  // helper to check if entered PIN is correct
   const handleConfirm = () => {
     const enteredPin = pin.join("");
 
@@ -82,12 +86,14 @@ export default function PinModal({ visible, onClose, onSuccess }) {
     }
   };
 
+  // helper to switch to password screen if user forgot PIN
   const handleForgotPin = () => {
     setPassword("");
     setPasswordError("");
     setScreen("password");
   };
 
+  // helper to check entered password and reveal PIN if correct
   const handlePasswordConfirm = async () => {
     if (!password.trim()) {
       setPasswordError("Please enter your password");
@@ -106,12 +112,14 @@ export default function PinModal({ visible, onClose, onSuccess }) {
         return;
       }
 
+      // re-authenticate user with entered password
       const credential = EmailAuthProvider.credential(user.email, password);
 
       await reauthenticateWithCredential(user, credential);
 
       setPassword("");
       setPasswordError("");
+      // if successful, switch to reveal PIN screen
       setScreen("revealPin");
     } catch (err) {
       console.log("Password check error:", err);
@@ -146,6 +154,7 @@ export default function PinModal({ visible, onClose, onSuccess }) {
             borderRadius: 20,
           }}
         >
+          {/* load the pin screen */}
           {screen === "pin" && (
             <>
               <Text

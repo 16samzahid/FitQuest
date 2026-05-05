@@ -21,15 +21,17 @@ import { db } from "../../config/FirebaseConfig";
 import { useAppData } from "../context/AppDataContext";
 
 const Shop = () => {
+  // App data context provides the current pet, child, accessories, and refresh helper.
   const { pet, setPet, child, childAccessories, refreshData } = useAppData();
   const [activeTab, setActiveTab] = useState("colours");
   const [colours, setColours] = useState([]);
   const [accessories, setAccessories] = useState([]);
   const { width } = useWindowDimensions();
 
+  // Circle size for each colour item, accounting for padding and spacing.
   const circleSize = (width - 60) / 3;
-  // 60 accounts for padding + gaps
 
+  // Play a confirmation sound when an accessory purchase succeeds.
   const playSound = async () => {
     try {
       const { sound } = await Audio.Sound.createAsync(
@@ -73,21 +75,13 @@ const Shop = () => {
           equipped: true,
         });
         playSound();
-
-        // const currentlyEquipped = childAccessories.filter((a) => a.equipped);
-        // await Promise.all(
-        //   currentlyEquipped.map((other) =>
-        //     updateDoc(doc(db, "ChildAccessory", other.id), {
-        //       equipped: false,
-        //     }),
-        //   ),
-        // );
       }
     } catch (error) {
       console.error("Accessory action failed:", error);
     }
   };
 
+  // Update the selected pet colour both locally and in Firestore.
   const changeColour = (colourId) => async () => {
     if (!child) {
       console.warn("changeColour called with no child");
@@ -96,7 +90,7 @@ const Shop = () => {
     setPet((prev) => ({ ...prev, colourID: colourId }));
 
     try {
-      // optimistic update
+      // optimistic update: show the new colour immediately while Firestore updates.
       const colourSnap = await getDoc(doc(db, "Colours", colourId));
 
       if (colourSnap.exists()) {
@@ -113,6 +107,7 @@ const Shop = () => {
     }
   };
 
+  // Load the shop product data from Firestore once when the component mounts.
   const fetchShopData = async () => {
     try {
       const colourSnap = await getDocs(collection(db, "Colours"));
@@ -141,6 +136,7 @@ const Shop = () => {
   };
 
   useEffect(() => {
+    // Fetch the available colours and accessories when the shop opens.
     fetchShopData();
   }, []);
 
@@ -207,6 +203,8 @@ const Shop = () => {
               const equipped = accessoryRecord?.equipped;
 
               return (
+                // pressable card for each accessory, showing image, name, price, and owned/equipped status.
+                // Pressing triggers purchase or equip action.
                 <Pressable
                   key={item.id}
                   className={`h-40 w-40 rounded-xl bg-white mb-4 p-3 ${

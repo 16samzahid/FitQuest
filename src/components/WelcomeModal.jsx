@@ -14,6 +14,7 @@ export default function WelcomeModal({ visible, onClose }) {
             Welcome to FitQuest
           </Text>
 
+          {/* Show the default parent PIN for new users. */}
           <Text className="mb-3 text-center text-lg leading-8 text-gray-700">
             Your default parent PIN is
           </Text>
@@ -22,6 +23,7 @@ export default function WelcomeModal({ visible, onClose }) {
             1234
           </Text>
 
+          {/* Explain what can be customized in settings. */}
           <Text className="mb-2 text-center text-base leading-7 text-gray-700">
             You can change{" "}
             <Text className="font-bold text-lg">the Child Name</Text>,
@@ -36,6 +38,7 @@ export default function WelcomeModal({ visible, onClose }) {
             Settings.
           </Text>
 
+          {/* Close the modal when OK is pressed, allowing the user to proceed. */}
           <Pressable
             onPress={onClose}
             className="w-full rounded-2xl bg-indigo-600 py-4 active:bg-indigo-700"

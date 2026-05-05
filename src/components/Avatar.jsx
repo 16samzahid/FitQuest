@@ -12,6 +12,7 @@ export default function Avatar({
   const { pet, loading, childAccessories, child } = useAppData();
   const [accessories, setAccessories] = useState([]);
 
+  // load all accessories for mapping later
   useEffect(() => {
     const fetchAccessories = async () => {
       try {
@@ -31,6 +32,7 @@ export default function Avatar({
     fetchAccessories();
   }, []);
 
+  // helper to get encouragement message based on lowest stat
   const getEncouragementMessage = () => {
     const health = child?.health ?? 0;
     const hunger = child?.hunger ?? 0;
@@ -115,9 +117,11 @@ export default function Avatar({
           resizeMode="contain"
         />
 
+        {/* go through equipped accessories and display them.  */}
         {childAccessories
           ?.filter((a) => a.equipped)
           .map((childAccessory) => {
+            // find accessory details for this equipped item
             const accessory = accessories.find(
               (a) => a.id === childAccessory.accessoryID,
             );

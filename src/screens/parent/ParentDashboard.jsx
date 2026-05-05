@@ -5,6 +5,7 @@ import ApproveTasks from "../../components/ApproveTasks";
 import ProgressStats from "../../components/ProgressStats";
 
 const ParentDashboard = () => {
+  // Parent dashboard screen showing progress and approval actions.
   return (
     <SafeAreaView className="flex-1" edges={["top"]}>
       <View className="flex-1 px-4">
@@ -12,7 +13,10 @@ const ParentDashboard = () => {
           Dashboard
         </Text>
 
+        {/* Progress charts for the parent's child, showing task completion trends. */}
         <ProgressStats />
+
+        {/* Approve tasks section where the parent can review and approve pending child tasks. */}
         <ApproveTasks />
       </View>
     </SafeAreaView>

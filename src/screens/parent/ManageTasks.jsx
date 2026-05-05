@@ -49,6 +49,7 @@ const ManageTasks = () => {
     dueDate,
     recurrence,
   ) => {
+    // Build task data and create the task, either as a one-time task or recurring series.
     if (!child) {
       alert("No child selected");
       alert("Please select a child before creating a task");
@@ -105,6 +106,7 @@ const ManageTasks = () => {
           <Text className="text-white font-semibold">+ Create New Task</Text>
         </Pressable>
 
+        {/* Modal for creating a new task. */}
         <AddTaskModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
@@ -127,6 +129,8 @@ const ManageTasks = () => {
             )
           }
         />
+
+        {/* Tasks for the parent to review, grouped by view type. */}
         <TasksSection title="Today's Tasks" />
         <TasksSection title="Upcoming Tasks" />
         <TasksSection title="Repeating Tasks" />

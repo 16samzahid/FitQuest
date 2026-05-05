@@ -11,10 +11,11 @@ const weekdayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function ProgressStats() {
   const { child } = useAppData();
+  // The chart width is based on the screen width so the bar chart fits nicely.
   const { width } = useWindowDimensions();
   const [tasks, setTasks] = useState([]);
   const [range, setRange] = useState("week");
-  const data = [{ value: 50 }, { value: 80 }, { value: 90 }, { value: 70 }];
+  // Labels used for the year view bar chart.
   const monthNames = [
     "Jan",
     "Feb",
@@ -30,6 +31,7 @@ export default function ProgressStats() {
     "Dec",
   ];
 
+  // Helper functions to build date ranges for month and year views.
   const getMonthStart = (date) => {
     const d = new Date(date);
     d.setDate(1);
@@ -60,6 +62,7 @@ export default function ProgressStats() {
   };
 
   useEffect(() => {
+    // Subscribe to the current child's task collection and keep local state up to date.
     if (!child?.id) {
       setTasks([]);
       return;
@@ -79,6 +82,7 @@ export default function ProgressStats() {
   }, [child]);
 
   const stats = useMemo(() => {
+    // Compute all chart data for the selected time range at render time.
     const today = new Date();
 
     let rangeStart;
@@ -88,6 +92,7 @@ export default function ProgressStats() {
     let filteredTasks = [];
 
     if (range === "week") {
+      // Week view: use the current week and count completed tasks per day.
       rangeStart = getWeekStart(today);
       rangeEnd = new Date(rangeStart);
       rangeEnd.setDate(rangeEnd.getDate() + 6);
@@ -153,6 +158,7 @@ export default function ProgressStats() {
     }
 
     if (range === "month") {
+      // Month view: show task activity across the current calendar month.
       rangeStart = getMonthStart(today);
       rangeEnd = getMonthEnd(today);
 
@@ -219,6 +225,7 @@ export default function ProgressStats() {
     }
 
     if (range === "year") {
+      // Year view: aggregate completed tasks by month for the current year.
       rangeStart = getYearStart(today);
       rangeEnd = getYearEnd(today);
 
