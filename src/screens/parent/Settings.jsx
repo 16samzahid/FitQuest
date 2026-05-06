@@ -150,12 +150,21 @@ const Settings = () => {
         ...docSnap.data(),
       }));
 
-      // Group tasks by description and keep only the latest instance of each
+      // Group by seriesId, not description.
+      // This prevents edited descriptions from appearing as a "new" task.
       const latestTasksMap = new Map();
+
       tasksList.forEach((task) => {
-        const existingTask = latestTasksMap.get(task.description);
-        if (!existingTask || task.createdAt > existingTask.createdAt) {
-          latestTasksMap.set(task.description, task);
+        const key =
+          task.seriesId || task.description?.trim()?.toLowerCase() || task.id;
+
+        const existingTask = latestTasksMap.get(key);
+
+        const currentCreatedAt = task.createdAt?.toMillis?.() ?? 0;
+        const existingCreatedAt = existingTask?.createdAt?.toMillis?.() ?? 0;
+
+        if (!existingTask || currentCreatedAt > existingCreatedAt) {
+          latestTasksMap.set(key, task);
         }
       });
 
@@ -291,12 +300,29 @@ const Settings = () => {
     }
 
     try {
-      await updateDoc(doc(db, "Task", selectedTask.id), {
+      const updateData = {
         description: taskDescription.trim(),
         category: taskCategory,
         coins: Number(taskCoins),
         approvalNeeded: taskApprovalNeeded,
-      });
+      };
+
+      const seriesId = selectedTask.seriesId || selectedTask.id;
+
+      const q = query(
+        collection(db, "Task"),
+        where("childID", "==", child.id),
+        where("recurrence", "==", "daily"),
+        where("seriesId", "==", seriesId),
+      );
+
+      const snapshot = await getDocs(q);
+
+      const updatePromises = snapshot.docs.map((docSnap) =>
+        updateDoc(doc(db, "Task", docSnap.id), updateData),
+      );
+
+      await Promise.all(updatePromises);
 
       setEditTaskModal(false);
       resetTaskForm();
@@ -307,11 +333,12 @@ const Settings = () => {
     }
   };
 
-  const handleDeleteTask = (taskId) => {
+  const handleDeleteTask = (task) => {
     if (dailyTasks.length <= 3) {
       Alert.alert("Cannot Delete", "You must maintain at least 3 daily tasks.");
       return;
     }
+
     Alert.alert(
       "Delete Task",
       "Are you sure you want to delete this daily task?",
@@ -325,7 +352,23 @@ const Settings = () => {
           style: "destructive",
           onPress: async () => {
             try {
-              await deleteDoc(doc(db, "Task", taskId));
+              const seriesId = task.seriesId || task.id;
+
+              const q = query(
+                collection(db, "Task"),
+                where("childID", "==", child.id),
+                where("recurrence", "==", "daily"),
+                where("seriesId", "==", seriesId),
+              );
+
+              const snapshot = await getDocs(q);
+
+              const deletePromises = snapshot.docs.map((docSnap) =>
+                deleteDoc(doc(db, "Task", docSnap.id)),
+              );
+
+              await Promise.all(deletePromises);
+
               await refreshDailyTasks();
             } catch (error) {
               console.error("Error deleting task:", error);
@@ -468,7 +511,7 @@ const Settings = () => {
                       </Pressable>
 
                       <Pressable
-                        onPress={() => handleDeleteTask(task.id)}
+                        onPress={() => handleDeleteTask(task)}
                         className="w-9 h-9 rounded-full bg-[#e54646] items-center justify-center"
                       >
                         <MaterialCommunityIcons

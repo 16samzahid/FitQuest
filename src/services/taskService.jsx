@@ -175,26 +175,26 @@ export const approveTask = async (taskId) => {
       hunger: newHunger,
     });
 
-    if (task.recurrence) {
-      const nextDueDate = getNextDueDate(task.recurrence, task.dueDate);
-      // Preserve seriesId for recurring tasks - use existing seriesId or fall back to current task ID
-      const seriesId = task.seriesId || taskId;
-      await addDoc(collection(db, "Task"), {
-        approvalNeeded: task.approvalNeeded,
-        approvedBy: null,
-        category: task.category,
-        childID: task.childID,
-        coins: task.coins,
-        completedAt: null,
-        createdAt: Timestamp.now(),
-        description: task.description,
-        dueDate: Timestamp.fromDate(nextDueDate),
-        recurrence: task.recurrence,
-        seriesId: seriesId,
-        status: "notdone",
-        xp: task.xp,
-      });
-    }
+    // if (task.recurrence) {
+    //   const nextDueDate = getNextDueDate(task.recurrence, task.dueDate);
+    //   // Preserve seriesId for recurring tasks - use existing seriesId or fall back to current task ID
+    //   const seriesId = task.seriesId || taskId;
+    //   await addDoc(collection(db, "Task"), {
+    //     approvalNeeded: task.approvalNeeded,
+    //     approvedBy: null,
+    //     category: task.category,
+    //     childID: task.childID,
+    //     coins: task.coins,
+    //     completedAt: null,
+    //     createdAt: Timestamp.now(),
+    //     description: task.description,
+    //     dueDate: Timestamp.fromDate(nextDueDate),
+    //     recurrence: task.recurrence,
+    //     seriesId: seriesId,
+    //     status: "notdone",
+    //     xp: task.xp,
+    //   });
+    // }
   } catch (error) {
     console.error("Error approving task:", error);
   }
@@ -207,58 +207,80 @@ const getTimestampMillis = (timestamp) => {
     return timestamp.toDate().getTime();
   return new Date(timestamp).getTime();
 };
+const isSameDay = (dateA, dateB) => {
+  if (!dateA || !dateB) return false;
+
+  const a = dateA?.toDate ? dateA.toDate() : new Date(dateA);
+  const b = dateB?.toDate ? dateB.toDate() : new Date(dateB);
+
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+};
 
 // Ensure recurring tasks are recreated when their due dates pass.
-// This function keeps the child task list up to date by generating the next instance.
+// This works for both daily tasks and weekly tasks such as Monday, Tuesday, etc.
 export const reconcileRecurringTasks = async (childID) => {
   if (!childID) return;
 
   try {
-    // Fetch all tasks for the child (no composite index needed)
     const q = query(collection(db, "Task"), where("childID", "==", childID));
 
     const snapshot = await getDocs(q);
-    const allTasks = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
+
+    const allTasks = snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
     }));
 
-    // Filter for recurring tasks client-side
-    const tasks = allTasks.filter(
-      (task) => task.recurrence && task.recurrence !== null,
+    const recurringTasks = allTasks.filter(
+      (task) => task.recurrence && task.dueDate,
     );
 
-    const now = new Date();
     const latestBySeries = new Map();
 
-    tasks.forEach((task) => {
+    recurringTasks.forEach((task) => {
       const seriesId = task.seriesId || task.id;
-      const existing = latestBySeries.get(seriesId);
-      const dueMillis = getTimestampMillis(task.dueDate);
+      const existingTask = latestBySeries.get(seriesId);
 
-      if (!existing || dueMillis > getTimestampMillis(existing.dueDate)) {
+      if (
+        !existingTask ||
+        getTimestampMillis(task.dueDate) >
+          getTimestampMillis(existingTask.dueDate)
+      ) {
         latestBySeries.set(seriesId, task);
       }
     });
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     for (const task of latestBySeries.values()) {
-      if (!task.dueDate || task.status === "approved") continue;
+      if (!task.dueDate) continue;
 
       const dueDate = task.dueDate.toDate
         ? task.dueDate.toDate()
         : new Date(task.dueDate);
-      if (dueDate >= now) continue;
+
+      dueDate.setHours(0, 0, 0, 0);
+
+      // If the latest task is today or in the future, do not create another one.
+      if (dueDate >= today) continue;
 
       const seriesId = task.seriesId || task.id;
-      const hasFuture = tasks.some(
-        (t) =>
-          (t.seriesId || t.id) === seriesId &&
-          getTimestampMillis(t.dueDate) > getTimestampMillis(task.dueDate),
-      );
-
-      if (hasFuture) continue;
 
       const nextDueDate = getNextDueDate(task.recurrence, task.dueDate);
+      nextDueDate.setHours(0, 0, 0, 0);
+
+      const alreadyExists = recurringTasks.some((existingTask) => {
+        const sameSeries =
+          (existingTask.seriesId || existingTask.id) === seriesId;
+        return sameSeries && isSameDay(existingTask.dueDate, nextDueDate);
+      });
+
+      if (alreadyExists) continue;
 
       await addDoc(collection(db, "Task"), {
         approvalNeeded: task.approvalNeeded,
