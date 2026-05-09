@@ -7,6 +7,7 @@ import ParentNavigator from "./ParentNavigator";
 const Stack = createNativeStackNavigator();
 
 export default function Navigator() {
+  // Main app navigator that switches between child and parent navigation based on mode
   const { mode } = useMode();
 
   return (

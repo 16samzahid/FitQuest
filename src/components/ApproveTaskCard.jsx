@@ -10,6 +10,7 @@ export default function ApproveTaskCard({
 }) {
   const slideAnim = useRef(new Animated.Value(0)).current;
 
+  // helper to animate and call service
   const animateAndCall = (callback) => {
     Animated.timing(slideAnim, {
       toValue: 1,

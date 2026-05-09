@@ -1,9 +1,10 @@
 import { useAppData } from "@/src/context/AppDataContext";
-import { Timestamp } from "firebase/firestore";
+import { collection, doc, Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import { Pressable, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AddTaskModal from "../../components/addTaskModal";
+import { db } from "../../../config/FirebaseConfig";
+import AddTaskModal from "../../components/AddTaskModal";
 import TasksSection from "../../components/TasksSection";
 import { createTask } from "../../services/taskService";
 
@@ -48,6 +49,7 @@ const ManageTasks = () => {
     dueDate,
     recurrence,
   ) => {
+    // Build task data and create the task, either as a one-time task or recurring series.
     if (!child) {
       alert("No child selected");
       alert("Please select a child before creating a task");
@@ -58,7 +60,8 @@ const ManageTasks = () => {
       if (recurrence) {
         finalDueDate = getFirstDueDate(recurrence);
       }
-      await createTask({
+
+      const taskData = {
         approvalNeeded: approvalNeeded,
         approvedBy: null,
         category: category,
@@ -71,7 +74,17 @@ const ManageTasks = () => {
         recurrence: recurrence ?? null,
         status: "notdone",
         xp: 10,
-      });
+      };
+
+      // For recurring tasks, create a doc ref first so we can set seriesId
+      if (recurrence) {
+        const newTaskRef = doc(collection(db, "Task"));
+        taskData.seriesId = newTaskRef.id;
+        await createTask(taskData, newTaskRef);
+      } else {
+        // For one-time tasks, use regular addDoc
+        await createTask(taskData);
+      }
     } catch (err) {
       console.error("Failed creating task", err);
       alert("Failed to create task");
@@ -93,9 +106,11 @@ const ManageTasks = () => {
           <Text className="text-white font-semibold">+ Create New Task</Text>
         </Pressable>
 
+        {/* Modal for creating a new task. */}
         <AddTaskModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
+          childID={child?.id}
           onCreate={({
             description,
             approvalNeeded,
@@ -114,6 +129,8 @@ const ManageTasks = () => {
             )
           }
         />
+
+        {/* Tasks for the parent to review, grouped by view type. */}
         <TasksSection title="Today's Tasks" />
         <TasksSection title="Upcoming Tasks" />
         <TasksSection title="Repeating Tasks" />

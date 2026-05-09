@@ -6,6 +6,8 @@ const COLOR_MAP = {
   blue: "bg-[#5192AC]",
 };
 
+// simply a label, icon, and progress bar for a pet stat
+// used in the PetStatsCard component to show health, hunger, and happiness.
 export default function StatBar({ label, color, value, icon }) {
   return (
     <View className="mb-4 w-full">

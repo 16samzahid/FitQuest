@@ -9,6 +9,7 @@ export default function TasksCompleted() {
   const [todayTasks, setTodayTasks] = useState([]);
 
   useEffect(() => {
+    // Subscribe to the child's tasks and filter for those due today.
     if (!child || !child.id) {
       setTodayTasks([]);
       return;
@@ -28,7 +29,7 @@ export default function TasksCompleted() {
       });
 
       const todayTasksFiltered = allTasks.filter((task) => {
-        // 1️⃣ check exact date match
+        // check exact date match
         if (task.dueDate) {
           const due = task.dueDate.toDate();
           const sameExactDate =
@@ -37,6 +38,7 @@ export default function TasksCompleted() {
             due.getDate() === today.getDate();
           if (sameExactDate) return true;
         }
+        return false; // Only include tasks due exactly today
       });
 
       setTodayTasks(todayTasksFiltered);
@@ -45,6 +47,7 @@ export default function TasksCompleted() {
     return () => unsubscribe();
   }, [child]);
 
+  // Calculate completion stats from today's tasks.
   const completed = todayTasks.filter(
     (task) => task.status && task.status !== "notdone",
   ).length;

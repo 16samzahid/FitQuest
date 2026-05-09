@@ -9,14 +9,14 @@ const ChildPet = () => {
   const { child, loading } = useAppData();
   return (
     <SafeAreaView className="flex-1 px-4 pt-4" edges={["top"]}>
-      {/* Avatar */}
+      {/* Child pet screen shows the avatar and pet progression info. */}
       <View className="mt-10 mb-10 items-center w-full">
-        <Avatar width={400} height={400} />
-        {/* Stats */}
+        <Avatar width={400} height={400} showSpeechBubble={false} />
+        {/* Placeholder view for spacing beneath the avatar. */}
         <View className="flex-1 ml-4"></View>
       </View>
 
-      {/* Level */}
+      {/* Level and coin progress for the child's pet. */}
       <LevelCoinSection
         level={child?.level}
         progress={child?.xp}
@@ -30,15 +30,7 @@ const ChildPet = () => {
       ) : null}
 
       {/* Colours and Accessories */}
-      <Shop
-      // colours={["#FF4351", "#FF43EC", "#65FF43", "#6E43FF"]}
-      // accessories={[
-      //   { name: "Hat" },
-      //   { name: "Glasses" },
-      //   { name: "Shoes" },
-      //   { name: "Backpack" },
-      // ]}
-      />
+      <Shop />
     </SafeAreaView>
   );
 };

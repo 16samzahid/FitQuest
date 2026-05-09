@@ -1,12 +1,18 @@
 import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, View } from "react-native";
+import { ActivityIndicator, Image, Text, View } from "react-native";
 import { db } from "../../config/FirebaseConfig";
 import { useAppData } from "../context/AppDataContext";
 
-export default function Avatar({ width = 300, height = 300 }) {
-  const { pet, loading, childAccessories } = useAppData();
+export default function Avatar({
+  width = 300,
+  height = 300,
+  showSpeechBubble = false,
+}) {
+  const { pet, loading, childAccessories, child } = useAppData();
   const [accessories, setAccessories] = useState([]);
+
+  // load all accessories for mapping later
   useEffect(() => {
     const fetchAccessories = async () => {
       try {
@@ -25,12 +31,32 @@ export default function Avatar({ width = 300, height = 300 }) {
 
     fetchAccessories();
   }, []);
-  // console.log(
-  //   "Rendering Avatar with pet:",
-  //   pet,
-  //   "and accessories:",
-  //   childAccessories,
-  // );
+
+  // helper to get encouragement message based on lowest stat
+  const getEncouragementMessage = () => {
+    const health = child?.health ?? 0;
+    const hunger = child?.hunger ?? 0;
+    const happiness = child?.happiness ?? 0;
+
+    const lowestStat = Math.min(health, hunger, happiness);
+
+    if (lowestStat === hunger) {
+      if (hunger < 40) return "I'm really hungry!";
+      if (hunger < 60) return "How about a healthy snack?";
+    }
+
+    if (lowestStat === health) {
+      if (health < 40) return "I need some exercise!";
+      if (health < 60) return "Let's do something healthy!";
+    }
+
+    if (lowestStat === happiness) {
+      if (happiness < 40) return "I feel a bit sad...";
+      if (happiness < 60) return "Can we do something fun?";
+    }
+
+    return "I'm doing great!";
+  };
 
   if (loading) {
     return <ActivityIndicator size="large" />;
@@ -41,48 +67,81 @@ export default function Avatar({ width = 300, height = 300 }) {
   }
 
   return (
-    <View className="w-44 h-44 items-center justify-center self-center mt-10 relative">
-      {/* Base pet */}
-      <Image
-        source={{ uri: pet.imageURL }}
-        style={{ width, height }}
-        resizeMode="contain"
-      />
+    <View className="items-center self-center mt-8 relative">
+      {showSpeechBubble && (
+        <View
+          className="items-center z-10"
+          style={{
+            position: "absolute",
+            top: -30,
+            left: -60,
+          }}
+        >
+          <View className="max-w-[220px] rounded-2xl bg-white px-4 py-3 shadow">
+            <Text className="text-center text-base font-semibold text-gray-700">
+              {getEncouragementMessage()}
+            </Text>
+          </View>
 
-      {/* Smile overlay */}
-      <Image
-        source={{ uri: pet.moodImageURL }}
-        style={{
-          position: "absolute",
-          width,
-          height,
-        }}
-        resizeMode="contain"
-      />
+          <View
+            style={{
+              width: 0,
+              height: 0,
+              borderLeftWidth: 8,
+              borderRightWidth: 8,
+              borderTopWidth: 12,
+              borderLeftColor: "transparent",
+              borderRightColor: "transparent",
+              borderTopColor: "white",
+              marginTop: -1,
+              marginLeft: 40,
+            }}
+          />
+        </View>
+      )}
 
-      {/* Accessories */}
-      {childAccessories
-        ?.filter((a) => a.equipped)
-        .map((childAccessory) => {
-          const accessory = accessories.find(
-            (a) => a.id === childAccessory.accessoryID,
-          );
+      <View className="w-44 h-44 items-center justify-center relative mt-6">
+        <Image
+          source={{ uri: pet.imageURL }}
+          style={{ width, height }}
+          resizeMode="contain"
+        />
 
-          if (!accessory) return null;
+        <Image
+          source={{ uri: pet.moodImageURL }}
+          style={{
+            position: "absolute",
+            width,
+            height,
+          }}
+          resizeMode="contain"
+        />
 
-          return (
-            <Image
-              key={childAccessory.id}
-              source={{ uri: accessory.imageURL }}
-              style={{
-                position: "absolute",
-                width,
-                height,
-              }}
-              resizeMode="contain"
-            />
-          );
-        })}
+        {/* go through equipped accessories and display them.  */}
+        {childAccessories
+          ?.filter((a) => a.equipped)
+          .map((childAccessory) => {
+            // find accessory details for this equipped item
+            const accessory = accessories.find(
+              (a) => a.id === childAccessory.accessoryID,
+            );
+
+            if (!accessory) return null;
+
+            return (
+              <Image
+                key={childAccessory.id}
+                source={{ uri: accessory.imageURL }}
+                style={{
+                  position: "absolute",
+                  width,
+                  height,
+                }}
+                resizeMode="contain"
+              />
+            );
+          })}
+      </View>
     </View>
   );
 }

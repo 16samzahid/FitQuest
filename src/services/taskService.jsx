@@ -4,12 +4,18 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
   increment,
+  onSnapshot,
+  query,
+  setDoc,
   Timestamp,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { db } from "../../config/FirebaseConfig";
 
+// Map weekday names to JS day indexes for recurring task calculations.
 const weekdayMap = {
   Sunday: 0,
   Monday: 1,
@@ -23,11 +29,17 @@ const weekdayMap = {
 const getNextDueDate = (recurrenceDay, fromDate) => {
   const base = fromDate?.toDate ? fromDate.toDate() : new Date(fromDate);
   base.setHours(0, 0, 0, 0);
+
+  if (recurrenceDay === "daily") {
+    const nextDate = new Date(base);
+    nextDate.setDate(nextDate.getDate() + 1);
+    return nextDate;
+  }
+
   const todayIndex = base.getDay();
   const targetIndex = weekdayMap[recurrenceDay];
   let diff = targetIndex - todayIndex;
 
-  // move forward at least 1 week
   if (diff <= 0) {
     diff += 7;
   }
@@ -37,11 +49,27 @@ const getNextDueDate = (recurrenceDay, fromDate) => {
   return nextDate;
 };
 
-export const createTask = async (taskData) => {
-  console.log(taskData.recurrence);
+const formatDateId = (date) => {
+  const jsDate = date?.toDate ? date.toDate() : new Date(date);
+
+  const year = jsDate.getFullYear();
+  const month = String(jsDate.getMonth() + 1).padStart(2, "0");
+  const day = String(jsDate.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+export const createTask = async (taskData, docRef = null) => {
+  // If a docRef is provided (for recurring tasks with seriesId), use setDoc
+  if (docRef) {
+    await setDoc(docRef, taskData);
+    return docRef;
+  }
+  // Otherwise use addDoc for one-time tasks
   return await addDoc(collection(db, "Task"), taskData);
 };
 
+// Mark a previously pending task as not done so the child can retry it.
 export const rejectTask = async (taskId) => {
   try {
     console.log(`Task ${taskId} rejected`);
@@ -83,6 +111,7 @@ export const completeTask = async (taskId) => {
   }
 };
 
+// Approve a task and update the child's stats, XP, coins, and next recurrence if needed.
 export const approveTask = async (taskId) => {
   try {
     console.log(`Task ${taskId} approved`);
@@ -92,6 +121,7 @@ export const approveTask = async (taskId) => {
       status: "approved",
       completedAt: Timestamp.now(),
     });
+
     // update child's xp and coins
     const taskSnapshot = await getDoc(taskRef);
     const task = taskSnapshot.data();
@@ -106,14 +136,177 @@ export const approveTask = async (taskId) => {
 
     const newLevel = child.level + levelsGained;
 
+    // update pet's health, happiness, hunger based on task category
+    let healthChange = 0;
+    let happinessChange = 0;
+    let hungerChange = 0;
+
+    switch (task.category) {
+      case "Food":
+      case "Water":
+        hungerChange = 10;
+        break;
+
+      case "Exercise":
+      case "Hygiene":
+        healthChange = 10;
+        break;
+
+      case "Learning":
+      case "Play":
+        happinessChange = 10;
+        break;
+
+      default:
+        break;
+    }
+
+    const newHealth =
+      healthChange > 0
+        ? Math.min((child.health ?? 0) + healthChange, 100)
+        : (child.health ?? 0);
+
+    const newHappiness =
+      happinessChange > 0
+        ? Math.min((child.happiness ?? 0) + happinessChange, 100)
+        : (child.happiness ?? 0);
+
+    const newHunger =
+      hungerChange > 0
+        ? Math.min((child.hunger ?? 0) + hungerChange, 100)
+        : (child.hunger ?? 0);
+
     await updateDoc(childRef, {
       xp: remainingXP,
       coins: increment(task.coins),
       level: newLevel,
+      health: newHealth,
+      happiness: newHappiness,
+      hunger: newHunger,
     });
-    if (task.recurrence) {
+
+    // if (task.recurrence) {
+    //   const nextDueDate = getNextDueDate(task.recurrence, task.dueDate);
+    //   // Preserve seriesId for recurring tasks - use existing seriesId or fall back to current task ID
+    //   const seriesId = task.seriesId || taskId;
+    //   await addDoc(collection(db, "Task"), {
+    //     approvalNeeded: task.approvalNeeded,
+    //     approvedBy: null,
+    //     category: task.category,
+    //     childID: task.childID,
+    //     coins: task.coins,
+    //     completedAt: null,
+    //     createdAt: Timestamp.now(),
+    //     description: task.description,
+    //     dueDate: Timestamp.fromDate(nextDueDate),
+    //     recurrence: task.recurrence,
+    //     seriesId: seriesId,
+    //     status: "notdone",
+    //     xp: task.xp,
+    //   });
+    // }
+  } catch (error) {
+    console.error("Error approving task:", error);
+  }
+};
+
+const getTimestampMillis = (timestamp) => {
+  if (!timestamp) return 0;
+  if (typeof timestamp.toMillis === "function") return timestamp.toMillis();
+  if (typeof timestamp.toDate === "function")
+    return timestamp.toDate().getTime();
+  return new Date(timestamp).getTime();
+};
+const isSameDay = (dateA, dateB) => {
+  if (!dateA || !dateB) return false;
+
+  const a = dateA?.toDate ? dateA.toDate() : new Date(dateA);
+  const b = dateB?.toDate ? dateB.toDate() : new Date(dateB);
+
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+};
+
+// Ensure recurring tasks are recreated when their due dates pass.
+// This works for both daily tasks and weekly tasks such as Monday, Tuesday, etc.
+export const reconcileRecurringTasks = async (childID) => {
+  if (!childID) return;
+
+  try {
+    const q = query(collection(db, "Task"), where("childID", "==", childID));
+
+    const snapshot = await getDocs(q);
+
+    const allTasks = snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
+    }));
+
+    const recurringTasks = allTasks.filter(
+      (task) => task.recurrence && task.dueDate,
+    );
+
+    const latestBySeries = new Map();
+
+    recurringTasks.forEach((task) => {
+      const seriesId = task.seriesId || task.id;
+      const existingTask = latestBySeries.get(seriesId);
+
+      if (
+        !existingTask ||
+        getTimestampMillis(task.dueDate) >
+          getTimestampMillis(existingTask.dueDate)
+      ) {
+        latestBySeries.set(seriesId, task);
+      }
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (const task of latestBySeries.values()) {
+      if (!task.dueDate) continue;
+
+      const dueDate = task.dueDate.toDate
+        ? task.dueDate.toDate()
+        : new Date(task.dueDate);
+
+      dueDate.setHours(0, 0, 0, 0);
+
+      // If the latest task is today or in the future, do not create another one.
+      if (dueDate >= today) continue;
+
+      const seriesId = task.seriesId || task.id;
+
       const nextDueDate = getNextDueDate(task.recurrence, task.dueDate);
-      await addDoc(collection(db, "Task"), {
+      nextDueDate.setHours(0, 0, 0, 0);
+
+      const alreadyExists = recurringTasks.some((existingTask) => {
+        const sameSeries =
+          (existingTask.seriesId || existingTask.id) === seriesId;
+
+        return sameSeries && isSameDay(existingTask.dueDate, nextDueDate);
+      });
+
+      if (alreadyExists) continue;
+
+      const nextDateId = formatDateId(nextDueDate);
+
+      // This fixed ID prevents duplicate recurring tasks being created
+      // if reconcileRecurringTasks runs more than once at the same time.
+      const newTaskId = `${seriesId}_${nextDateId}`;
+      const newTaskRef = doc(db, "Task", newTaskId);
+
+      const existingNextTask = await getDoc(newTaskRef);
+
+      if (existingNextTask.exists()) {
+        continue;
+      }
+
+      await setDoc(newTaskRef, {
         approvalNeeded: task.approvalNeeded,
         approvedBy: null,
         category: task.category,
@@ -124,24 +317,24 @@ export const approveTask = async (taskId) => {
         description: task.description,
         dueDate: Timestamp.fromDate(nextDueDate),
         recurrence: task.recurrence,
+        seriesId: seriesId,
         status: "notdone",
         xp: task.xp,
       });
     }
   } catch (error) {
-    console.error("Error approving task:", error);
+    console.error("Error reconciling recurring tasks:", error);
   }
 };
 
+// Edit an existing task, preserving recurrence metadata and updating due dates.
 export const editTask = async (taskId, updatedData) => {
   try {
     const taskRef = doc(db, "Task", taskId);
 
     // get existing task
     const snapshot = await getDoc(taskRef);
-
     const existingTask = snapshot.data();
-
     let finalDueDate = existingTask.dueDate;
 
     // if switching to recurring → calculate new due date
@@ -164,22 +357,61 @@ export const editTask = async (taskId, updatedData) => {
       }
     }
 
-    await updateDoc(taskRef, {
+    // Preserve seriesId if it exists
+    const updatePayload = {
       description: updatedData.description,
-
       approvalNeeded: updatedData.approvalNeeded,
-
       category: updatedData.category,
-
       coins: updatedData.coins,
-
       recurrence: updatedData.recurrence || null,
-
       dueDate: finalDueDate,
-    });
+    };
+
+    // If task has a seriesId, preserve it. If it doesn't but is now recurring, set it to taskId
+    if (existingTask.seriesId) {
+      updatePayload.seriesId = existingTask.seriesId;
+    } else if (updatedData.recurrence) {
+      updatePayload.seriesId = taskId;
+    }
+
+    await updateDoc(taskRef, updatePayload);
 
     console.log(`Task ${taskId} updated`);
   } catch (error) {
     console.error("Error editing task:", error);
   }
+};
+
+export const getCompletedTasks = async (childID) => {
+  try {
+    const q = query(
+      collection(db, "Task"),
+      where("childID", "==", childID),
+      where("status", "==", "approved"),
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error("Error fetching completed tasks:", error);
+    return [];
+  }
+};
+// Listen to pending approval tasks for the parent dashboard badge state.
+export const listenToPendingTasks = (childID, callback) => {
+  if (!childID) return () => {};
+
+  const q = query(
+    collection(db, "Task"),
+    where("childID", "==", childID),
+    where("status", "==", "pending"),
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    callback(!snapshot.empty);
+  });
+
+  return unsubscribe;
 };

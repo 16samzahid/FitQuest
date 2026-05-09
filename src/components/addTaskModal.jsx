@@ -1,14 +1,29 @@
+import AntDesign from "@expo/vector-icons/AntDesign";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Checkbox from "expo-checkbox";
-import { useState } from "react";
-import { Modal, Pressable, Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
+import { useAppData } from "../context/AppDataContext";
+import { generateTaskSuggestion } from "../services/aiService";
+import { getCompletedTasks } from "../services/taskService";
 
-export default function AddTaskModal({ visible, onClose, onCreate }) {
+export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
+  const { child } = useAppData();
   const [description, setDescription] = useState("");
   const [approvalNeeded, setApprovalNeeded] = useState(true);
   const [category, setCategory] = useState(null);
   const [coins, setCoins] = useState("");
+  const [validationError, setValidationError] = useState("");
 
   // due date
   const [dueDate, setDueDate] = useState(null);
@@ -18,12 +33,20 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
   const [isRecurring, setIsRecurring] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
 
+  // completed tasks history
+  const [completedTasks, setCompletedTasks] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // AI loading state
+  const [aiLoading, setAiLoading] = useState(false);
+
   const categories = [
     { label: "Exercise", value: "Exercise" },
     { label: "Learning", value: "Learning" },
     { label: "Hygiene", value: "Hygiene" },
     { label: "Food", value: "Food" },
     { label: "Play", value: "Play" },
+    { label: "Water", value: "Water" },
   ];
 
   const coinOptions = [
@@ -43,6 +66,32 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
     "Saturday",
   ];
 
+  // load completed tasks when modal opens or childID changes
+  useEffect(() => {
+    if (visible && childID) {
+      const fetchCompletedTasks = async () => {
+        const tasks = await getCompletedTasks(childID);
+        setCompletedTasks(tasks);
+      };
+      fetchCompletedTasks();
+    }
+  }, [visible, childID]);
+
+  // reset form when modal closes
+  const selectFromHistory = (task) => {
+    setDescription(task.description);
+    setApprovalNeeded(task.approvalNeeded);
+    setCategory(task.category);
+    setCoins(task.coins.toString());
+    // setDueDate(task.dueDate ? task.dueDate.toDate() : null);
+    setIsRecurring(!!task.recurrence);
+    if (task.recurrence) {
+      setSelectedDay(weekdays.indexOf(task.recurrence));
+    }
+    setShowHistory(false);
+  };
+
+  // toggle weekday selection for recurring tasks
   const toggleDay = (index) => {
     if (selectedDay === index) {
       setSelectedDay(null);
@@ -51,9 +100,64 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
     }
   };
 
-  const handleCreate = () => {
-    if (!description.trim()) return;
+  // get the ai task suggestion and use it to set fields in form
+  const getAISuggestion = async () => {
+    try {
+      if (!child) {
+        Alert.alert("Error", "No child selected");
+        return;
+      }
 
+      setAiLoading(true);
+      const suggestion = await generateTaskSuggestion(child);
+      console.log("AI suggestion:", suggestion);
+
+      if (suggestion) {
+        setDescription(suggestion.description || "");
+        setCategory(suggestion.category || null);
+        setCoins(suggestion.coins?.toString() || "");
+      }
+    } catch (error) {
+      console.error("Error getting AI suggestion:", error);
+      Alert.alert(
+        "Error",
+        error.message || "Could not get AI suggestion. Please try again.",
+      );
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // validate form and call onCreate prop with task data
+  const handleCreate = () => {
+    setValidationError("");
+
+    if (!child) {
+      setValidationError("No child selected.");
+      return false;
+    }
+    if (!description.trim()) {
+      setValidationError("Task description cannot be empty.");
+      return false;
+    }
+    if (!category) {
+      setValidationError("Please select a category.");
+      return false;
+    }
+    if (!coins) {
+      setValidationError("Please select a coin reward.");
+      return false;
+    }
+    if (isRecurring && selectedDay === null) {
+      setValidationError("Please select a day for the recurring task.");
+      return false;
+    }
+    if (!isRecurring && !dueDate) {
+      setValidationError("Please select a due date for one-time tasks.");
+      return false;
+    }
+
+    // prop that calls parent function to create task in firestore
     onCreate({
       description: description.trim(),
       approvalNeeded,
@@ -73,6 +177,10 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
     setDueDate(null);
     setSelectedDay(null);
     setIsRecurring(false);
+    setShowHistory(false);
+    setValidationError("");
+
+    return true;
   };
 
   return (
@@ -82,6 +190,77 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
           <Text className="text-xl font-bold text-[#150F59] mb-2">
             Create Task
           </Text>
+
+          {/* Validation error message */}
+          {validationError ? (
+            <View className="bg-red-50 border border-red rounded-lg p-3 mb-4">
+              <Text className="text-red">{validationError}</Text>
+            </View>
+          ) : null}
+
+          <View className="flex-row items-center justify-between mb-4">
+            {completedTasks.length > 0 && (
+              <Pressable
+                onPress={() => setShowHistory(!showHistory)}
+                className="flex-1 mr-2 py-2 px-3 bg-gray-100 rounded-lg"
+              >
+                <Text className="text-center text-gray-700 text-lg font-bold">
+                  {showHistory ? "Hide History" : "Task History"}
+                </Text>
+              </Pressable>
+            )}
+
+            {/* AI Suggestion Button */}
+            <Pressable
+              onPress={getAISuggestion}
+              disabled={aiLoading}
+              className={`flex-1 ml-2 py-2 px-3 rounded-lg items-center justify-center ${
+                aiLoading ? "bg-gray-400" : "bg-blue"
+              }`}
+            >
+              {aiLoading ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <AntDesign name="open-ai" size={24} color="white" />
+              )}
+            </Pressable>
+          </View>
+
+          {/* Completed tasks history */}
+          {showHistory && (
+            <View className="mb-4 max-h-48">
+              <Text className="text-lg font-semibold mb-2">
+                Completed Tasks:
+              </Text>
+              <ScrollView>
+                {completedTasks
+                  .reduce((uniqueTasks, task) => {
+                    // Only include if we haven't seen this description before
+                    if (
+                      !uniqueTasks.find(
+                        (t) => t.description === task.description,
+                      )
+                    ) {
+                      uniqueTasks.push(task);
+                    }
+                    return uniqueTasks;
+                  }, [])
+                  .map((task) => (
+                    // map each history task to a pressable item that fills form when pressed
+                    <Pressable
+                      key={task.id}
+                      onPress={() => selectFromHistory(task)}
+                      className="p-2 mb-1 bg-blue-50 rounded border"
+                    >
+                      <Text className="text-gray-800">{task.description}</Text>
+                      <Text className="text-sm text-gray-600">
+                        {task.category} - {task.coins} coins
+                      </Text>
+                    </Pressable>
+                  ))}
+              </ScrollView>
+            </View>
+          )}
 
           {/* Description */}
           <TextInput
@@ -116,14 +295,6 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
           />
 
           {/* Coins */}
-          {/* <TextInput
-            value={coins}
-            onChangeText={handleCoinsChange}
-            placeholder="Coins Reward (Suggested: 10)"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
-            className="border border-gray-200 rounded-lg p-3 mb-4 text-lg"
-          /> */}
           <Dropdown
             data={coinOptions}
             labelField="label"
@@ -249,6 +420,7 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
                 setDueDate(null);
                 setSelectedDay(null);
                 setIsRecurring(false);
+                setValidationError("");
 
                 onClose();
               }}
@@ -259,9 +431,9 @@ export default function AddTaskModal({ visible, onClose, onCreate }) {
             <Pressable
               className="px-4 py-2 rounded-full bg-indigo-600"
               onPress={() => {
-                handleCreate();
-
-                onClose();
+                if (handleCreate()) {
+                  onClose();
+                }
               }}
             >
               <Text className="text-white text-lg">Create Task</Text>

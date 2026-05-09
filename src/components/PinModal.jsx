@@ -2,24 +2,50 @@ import { useEffect, useRef, useState } from "react";
 import { Modal, Pressable, Text, TextInput, View } from "react-native";
 import { useAppData } from "../context/AppDataContext";
 
-// const CORRECT_PIN = "1234";
+import {
+  EmailAuthProvider,
+  getAuth,
+  reauthenticateWithCredential,
+} from "firebase/auth";
 
 export default function PinModal({ visible, onClose, onSuccess }) {
   const { parent } = useAppData();
+
   const CORRECT_PIN = parent?.pin || "1234";
+
+  const [screen, setScreen] = useState("pin"); // pin | password | revealPin
+
   const [pin, setPin] = useState(["", "", "", ""]);
   const [error, setError] = useState("");
 
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [checkingPassword, setCheckingPassword] = useState(false);
+
   const inputs = useRef([]);
 
-  // Reset when modal closes
   useEffect(() => {
     if (!visible) {
-      setPin(["", "", "", ""]);
-      setError("");
+      resetAll();
     }
   }, [visible]);
 
+  const resetAll = () => {
+    setScreen("pin");
+    setPin(["", "", "", ""]);
+    setError("");
+    setPassword("");
+    setPasswordError("");
+    setCheckingPassword(false);
+  };
+
+  // helper to close modal and reset all state
+  const closeEverything = () => {
+    resetAll();
+    onClose();
+  };
+
+  // helper to handle changes in each PIN input box
   const handleChange = (value, index) => {
     if (!/^\d?$/.test(value)) return;
 
@@ -28,18 +54,19 @@ export default function PinModal({ visible, onClose, onSuccess }) {
     setPin(newPin);
     setError("");
 
-    // Move to next box
     if (value && index < 3) {
-      inputs.current[index + 1].focus();
+      inputs.current[index + 1]?.focus();
     }
   };
 
+  // helper to handle backspace and move focus backwards
   const handleKeyPress = (e, index) => {
     if (e.nativeEvent.key === "Backspace" && !pin[index] && index > 0) {
-      inputs.current[index - 1].focus();
+      inputs.current[index - 1]?.focus();
     }
   };
 
+  // helper to check if entered PIN is correct
   const handleConfirm = () => {
     const enteredPin = pin.join("");
 
@@ -55,9 +82,51 @@ export default function PinModal({ visible, onClose, onSuccess }) {
     } else {
       setError("Incorrect PIN");
       setPin(["", "", "", ""]);
-      inputs.current[0].focus();
+      inputs.current[0]?.focus();
     }
-    console.log("Entered PIN:", enteredPin, "Correct PIN:", CORRECT_PIN);
+  };
+
+  // helper to switch to password screen if user forgot PIN
+  const handleForgotPin = () => {
+    setPassword("");
+    setPasswordError("");
+    setScreen("password");
+  };
+
+  // helper to check entered password and reveal PIN if correct
+  const handlePasswordConfirm = async () => {
+    if (!password.trim()) {
+      setPasswordError("Please enter your password");
+      return;
+    }
+
+    try {
+      setCheckingPassword(true);
+      setPasswordError("");
+
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user || !user.email) {
+        setPasswordError("Could not find the signed-in user");
+        return;
+      }
+
+      // re-authenticate user with entered password
+      const credential = EmailAuthProvider.credential(user.email, password);
+
+      await reauthenticateWithCredential(user, credential);
+
+      setPassword("");
+      setPasswordError("");
+      // if successful, switch to reveal PIN screen
+      setScreen("revealPin");
+    } catch (err) {
+      console.log("Password check error:", err);
+      setPasswordError("Incorrect password");
+    } finally {
+      setCheckingPassword(false);
+    }
   };
 
   return (
@@ -65,7 +134,8 @@ export default function PinModal({ visible, onClose, onSuccess }) {
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onClose}
+      presentationStyle="overFullScreen"
+      hardwareAccelerated={true}
     >
       <View
         style={{
@@ -84,116 +154,283 @@ export default function PinModal({ visible, onClose, onSuccess }) {
             borderRadius: 20,
           }}
         >
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: "700",
-              marginBottom: 24,
-              textAlign: "center",
-            }}
-          >
-            Enter Parent PIN
-          </Text>
-
-          {/* PIN boxes */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "center",
-              marginBottom: 16,
-              gap: 16,
-            }}
-          >
-            {pin.map((digit, index) => (
-              <TextInput
-                key={index}
-                ref={(ref) => (inputs.current[index] = ref)}
-                value={digit}
-                onChangeText={(value) => handleChange(value, index)}
-                onKeyPress={(e) => handleKeyPress(e, index)}
-                keyboardType="number-pad"
-                maxLength={1}
-                secureTextEntry
+          {/* load the pin screen */}
+          {screen === "pin" && (
+            <>
+              <Text
                 style={{
-                  width: 60,
-                  height: 65,
-                  borderWidth: 2,
-                  borderColor: "#d1d5db",
-                  borderRadius: 12,
-                  fontSize: 28,
+                  fontSize: 20,
+                  fontWeight: "700",
+                  marginBottom: 24,
                   textAlign: "center",
-                  fontWeight: "600",
                 }}
-              />
-            ))}
-          </View>
+              >
+                Enter Parent PIN
+              </Text>
 
-          {!!error && (
-            <Text
-              style={{
-                color: "#dc2626",
-                marginBottom: 12,
-                textAlign: "center",
-                fontSize: 14,
-                fontWeight: "500",
-              }}
-            >
-              {error}
-            </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  marginBottom: 16,
+                  gap: 16,
+                }}
+              >
+                {pin.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    ref={(ref) => (inputs.current[index] = ref)}
+                    value={digit}
+                    onChangeText={(value) => handleChange(value, index)}
+                    onKeyPress={(e) => handleKeyPress(e, index)}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    secureTextEntry
+                    style={{
+                      width: 60,
+                      height: 65,
+                      borderWidth: 2,
+                      borderColor: "#d1d5db",
+                      borderRadius: 12,
+                      fontSize: 28,
+                      textAlign: "center",
+                      fontWeight: "600",
+                    }}
+                  />
+                ))}
+              </View>
+
+              {!!error && (
+                <Text
+                  style={{
+                    color: "#dc2626",
+                    marginBottom: 12,
+                    textAlign: "center",
+                    fontSize: 14,
+                    fontWeight: "500",
+                  }}
+                >
+                  {error}
+                </Text>
+              )}
+
+              <Pressable onPress={handleForgotPin}>
+                <Text
+                  style={{
+                    color: "#2563eb",
+                    fontSize: 16,
+                    fontWeight: "700",
+                    textAlign: "center",
+                    marginTop: 8,
+                  }}
+                >
+                  Forgot PIN?
+                </Text>
+              </Pressable>
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  marginTop: 24,
+                  gap: 12,
+                }}
+              >
+                <Pressable
+                  onPress={closeEverything}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 16,
+                    borderRadius: 12,
+                    backgroundColor: "#f3f4f6",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "#6b7280", fontWeight: "600" }}>
+                    Cancel
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleConfirm}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 16,
+                    borderRadius: 12,
+                    backgroundColor: "#2563eb",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "700" }}>
+                    Confirm
+                  </Text>
+                </Pressable>
+              </View>
+            </>
           )}
 
-          {/* Buttons */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              marginTop: 24,
-              gap: 12,
-            }}
-          >
-            <Pressable
-              onPress={onClose}
-              style={{
-                flex: 1,
-                paddingVertical: 16,
-                paddingHorizontal: 20,
-                borderRadius: 12,
-                backgroundColor: "#f3f4f6",
-                alignItems: "center",
-                borderWidth: 1,
-                borderColor: "#e5e7eb",
-              }}
-            >
+          {screen === "password" && (
+            <>
               <Text
-                style={{ color: "#6b7280", fontSize: 17, fontWeight: "600" }}
+                style={{
+                  fontSize: 20,
+                  fontWeight: "700",
+                  textAlign: "center",
+                  marginBottom: 10,
+                }}
               >
-                Cancel
+                Confirm Password
               </Text>
-            </Pressable>
 
-            <Pressable
-              onPress={handleConfirm}
-              style={{
-                flex: 1,
-                paddingVertical: 16,
-                paddingHorizontal: 20,
-                borderRadius: 12,
-                backgroundColor: "#2563eb",
-                alignItems: "center",
-                shadowColor: "#2563eb",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.3,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
               <Text
-                style={{ color: "#ffffff", fontWeight: "700", fontSize: 17 }}
+                style={{
+                  fontSize: 14,
+                  color: "#6b7280",
+                  textAlign: "center",
+                  marginBottom: 20,
+                }}
               >
-                Confirm
+                Enter your account password to view your parent PIN.
               </Text>
-            </Pressable>
-          </View>
+
+              <TextInput
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setPasswordError("");
+                }}
+                placeholder="Account password"
+                secureTextEntry
+                autoCapitalize="none"
+                style={{
+                  borderWidth: 2,
+                  borderColor: passwordError ? "#dc2626" : "#d1d5db",
+                  borderRadius: 12,
+                  padding: 14,
+                  fontSize: 16,
+                }}
+              />
+
+              {!!passwordError && (
+                <Text
+                  style={{
+                    color: "#dc2626",
+                    marginTop: 10,
+                    textAlign: "center",
+                    fontSize: 14,
+                    fontWeight: "500",
+                  }}
+                >
+                  {passwordError}
+                </Text>
+              )}
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  marginTop: 24,
+                  gap: 12,
+                }}
+              >
+                <Pressable
+                  onPress={() => {
+                    setPassword("");
+                    setPasswordError("");
+                    setScreen("pin");
+                  }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 16,
+                    borderRadius: 12,
+                    backgroundColor: "#f3f4f6",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "#6b7280", fontWeight: "600" }}>
+                    Back
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handlePasswordConfirm}
+                  disabled={checkingPassword}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 16,
+                    borderRadius: 12,
+                    backgroundColor: checkingPassword ? "#93c5fd" : "#2563eb",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "700" }}>
+                    {checkingPassword ? "Checking..." : "Confirm"}
+                  </Text>
+                </Pressable>
+              </View>
+            </>
+          )}
+
+          {screen === "revealPin" && (
+            <>
+              <Text
+                style={{
+                  fontSize: 22,
+                  fontWeight: "800",
+                  marginBottom: 10,
+                  textAlign: "center",
+                }}
+              >
+                Your Parent PIN
+              </Text>
+
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: "#6b7280",
+                  textAlign: "center",
+                  marginBottom: 20,
+                }}
+              >
+                Your current parent PIN is:
+              </Text>
+
+              <View
+                style={{
+                  backgroundColor: "#f3f4f6",
+                  paddingVertical: 18,
+                  paddingHorizontal: 30,
+                  borderRadius: 16,
+                  marginBottom: 24,
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 34,
+                    fontWeight: "900",
+                    letterSpacing: 8,
+                    color: "#111827",
+                  }}
+                >
+                  {CORRECT_PIN}
+                </Text>
+              </View>
+
+              <Pressable
+                onPress={closeEverything}
+                style={{
+                  width: "100%",
+                  paddingVertical: 15,
+                  borderRadius: 12,
+                  backgroundColor: "#2563eb",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: "white", fontWeight: "700" }}>OK</Text>
+              </Pressable>
+            </>
+          )}
         </View>
       </View>
     </Modal>

@@ -24,7 +24,17 @@ const Signup = () => {
       const parentID = user.uid;
       createParentAndChild(parentID);
     } catch (err) {
-      setError(err.message);
+      if (err.code === "auth/email-already-in-use") {
+        setError("Email already in use");
+      } else if (err.code === "auth/invalid-email") {
+        setError("Invalid email address");
+      } else if (err.code === "auth/weak-password") {
+        setError("Password must be at least 6 characters");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+      // setError(err.message);
+      console.log("Error during sign up:", err);
     }
     console.log("Sign up attempted with email:", email);
     // create a new parent and child document in firestore
@@ -56,7 +66,7 @@ const Signup = () => {
 
       {error && (
         <Text className="text-red-600 text-center mb-2 font-semibold">
-          Email already in use
+          {error}
         </Text>
       )}
 

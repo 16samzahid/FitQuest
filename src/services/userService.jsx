@@ -1,39 +1,126 @@
-import { collection, doc, setDoc } from "firebase/firestore";
+// User service handles account setup, child profile creation, and parent/child record updates.
+import {
+  collection,
+  doc,
+  setDoc,
+  Timestamp,
+  updateDoc,
+} from "firebase/firestore";
+import { Alert } from "react-native";
 import { db } from "../../config/FirebaseConfig";
 
+// Create a new parent account with a linked child profile and default daily tasks.
 export const createParentAndChild = async (parentID) => {
   console.log("Creating parent and child with parentID:", parentID);
   try {
-    // 🔹 Create Parent document
+    // Create Parent document
     await setDoc(doc(db, "Parent", parentID), {
       name: "parentname",
-      pin: "1234", // default PIN, can be updated later in profile setup
+      pin: "1234",
     });
     console.log("Parent created with ID:", parentID);
 
-    // 🔹 Create Child document
+    // Create Child document
     const childRef = doc(collection(db, "Child"));
     const childID = childRef.id;
+
     await setDoc(childRef, {
+      hasSeenWelcomeMessage: false,
       coins: 0,
       happiness: 80,
       health: 80,
       hunger: 80,
+      lastStatusUpdate: Timestamp.now(),
       level: 1,
       name: "childname",
       parentID: parentID,
       pet: {
         colourID: "red_id",
-        imageURL:
-          "https://firebasestorage.googleapis.com/v0/b/fitquest-c9d82.firebasestorage.app/o/bodies%2Fred.png?alt=media&token=75d0adc9-945d-400f-8a57-f160c0dd6d46",
         mood: "happy",
       },
       xp: 0,
     });
     console.log("Child created and linked to parent ID:", parentID);
 
-    console.log("Parent and child created successfully");
+    // Create default daily tasks with seriesId
+    const task1Ref = doc(collection(db, "Task"));
+    await setDoc(task1Ref, {
+      approvalNeeded: true,
+      approvedBy: null,
+      category: "Water",
+      childID: childID,
+      coins: 5,
+      completedAt: null,
+      createdAt: Timestamp.now(),
+      description: "Drink A Glass Of Water",
+      dueDate: Timestamp.now(),
+      recurrence: "daily",
+      seriesId: task1Ref.id,
+      status: "notdone",
+      xp: 5,
+    });
+
+    const task2Ref = doc(collection(db, "Task"));
+    await setDoc(task2Ref, {
+      approvalNeeded: true,
+      approvedBy: null,
+      category: "Food",
+      childID: childID,
+      coins: 5,
+      completedAt: null,
+      createdAt: Timestamp.now(),
+      description: "Eat A Piece Of Fruit",
+      dueDate: Timestamp.now(),
+      recurrence: "daily",
+      seriesId: task2Ref.id,
+      status: "notdone",
+      xp: 5,
+    });
+
+    const task3Ref = doc(collection(db, "Task"));
+    await setDoc(task3Ref, {
+      approvalNeeded: true,
+      approvedBy: null,
+      category: "Exercise",
+      childID: childID,
+      coins: 5,
+      completedAt: null,
+      createdAt: Timestamp.now(),
+      description: "Do 5 Star Jumps",
+      dueDate: Timestamp.now(),
+      recurrence: "daily",
+      seriesId: task3Ref.id,
+      status: "notdone",
+      xp: 5,
+    });
+
+    console.log("Parent, child, and default tasks created successfully");
   } catch (error) {
     console.error("Error creating parent/child:", error);
+  }
+};
+
+// Update the child's display name in Firestore and notify the parent on success.
+export const editChildName = async (childID, newName) => {
+  try {
+    await updateDoc(doc(db, "Child", childID), {
+      name: newName,
+    });
+    console.log("Child name updated successfully");
+    Alert.alert("Success", "Child name updated successfully");
+  } catch (error) {
+    console.error("Error updating child name:", error);
+  }
+};
+
+// Update the parent's secure PIN used for switching into parent mode.
+export const editParentPin = async (parentID, newPin) => {
+  try {
+    await updateDoc(doc(db, "Parent", parentID), {
+      pin: newPin,
+    });
+    console.log("Parent PIN updated successfully");
+  } catch (error) {
+    console.error("Error updating parent PIN:", error);
   }
 };

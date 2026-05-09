@@ -5,34 +5,64 @@ import { BarChart, PieChart } from "react-native-gifted-charts";
 import PagerView from "react-native-pager-view";
 import { db } from "../../config/FirebaseConfig";
 import { useAppData } from "../context/AppDataContext";
+import { dateInRange, dayIndexFromDate, getWeekStart } from "../timeUtils";
 
 const weekdayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-const getWeekStart = (date) => {
-  const d = new Date(date);
-  const day = d.getDay(); // Sunday=0
-  const mondayOffset = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + mondayOffset);
-  d.setHours(0, 0, 0, 0);
-  return d;
-};
-
-const dayIndexFromDate = (d) => {
-  const day = d.getDay();
-  return day === 0 ? 6 : day - 1;
-};
-
-const dateInRange = (date, start, end) => {
-  return date >= start && date <= end;
-};
-
 export default function ProgressStats() {
   const { child } = useAppData();
+  // The chart width is based on the screen width so the bar chart fits nicely.
   const { width } = useWindowDimensions();
   const [tasks, setTasks] = useState([]);
-  const data = [{ value: 50 }, { value: 80 }, { value: 90 }, { value: 70 }];
+  const [range, setRange] = useState("week");
+  // Labels used for the year view bar chart.
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  // Helper functions to build date ranges for month and year views.
+  const getMonthStart = (date) => {
+    const d = new Date(date);
+    d.setDate(1);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  const getMonthEnd = (date) => {
+    const d = new Date(date);
+    d.setMonth(d.getMonth() + 1);
+    d.setDate(0);
+    d.setHours(23, 59, 59, 999);
+    return d;
+  };
+
+  const getYearStart = (date) => {
+    const d = new Date(date);
+    d.setMonth(0, 1);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  const getYearEnd = (date) => {
+    const d = new Date(date);
+    d.setMonth(11, 31);
+    d.setHours(23, 59, 59, 999);
+    return d;
+  };
 
   useEffect(() => {
+    // Subscribe to the current child's task collection and keep local state up to date.
     if (!child?.id) {
       setTasks([]);
       return;
@@ -52,82 +82,221 @@ export default function ProgressStats() {
   }, [child]);
 
   const stats = useMemo(() => {
-    const completed = tasks.filter((t) => t.status && t.status === "approved");
-
-    const notCompleted = tasks.filter(
-      (t) => !t.status || t.status === "notdone",
-    );
-
+    // Compute all chart data for the selected time range at render time.
     const today = new Date();
-    const weekStart = getWeekStart(today);
-    const weekEnd = new Date(weekStart);
 
-    weekEnd.setDate(weekEnd.getDate() + 6);
-    weekEnd.setHours(23, 59, 59, 999);
+    let rangeStart;
+    let rangeEnd;
+    let barData = [];
+    let chartTitle = "";
+    let filteredTasks = [];
 
-    const weekCounts = [0, 0, 0, 0, 0, 0, 0];
+    if (range === "week") {
+      // Week view: use the current week and count completed tasks per day.
+      rangeStart = getWeekStart(today);
+      rangeEnd = new Date(rangeStart);
+      rangeEnd.setDate(rangeEnd.getDate() + 6);
+      rangeEnd.setHours(23, 59, 59, 999);
 
-    completed.forEach((task) => {
-      const timestamp = task.completedAt || task.createdAt;
+      filteredTasks = tasks.filter((task) => {
+        const timestamp = task.completedAt || task.dueDate || task.createdAt;
+        if (!timestamp) return false;
 
-      if (!timestamp) {
-        console.log("NO TIMESTAMP:", task);
-        return;
-      }
+        const date = timestamp?.toDate
+          ? timestamp.toDate()
+          : new Date(timestamp);
+        return dateInRange(date, rangeStart, rangeEnd);
+      });
 
-      let date;
+      const completed = filteredTasks.filter((t) => t.status === "approved");
+      const notCompleted = filteredTasks.filter(
+        (t) => !t.status || t.status === "notdone",
+      );
 
-      if (timestamp?.toDate) {
-        date = timestamp.toDate();
-      } else {
-        date = new Date(timestamp);
-      }
+      const weekCounts = [0, 0, 0, 0, 0, 0, 0];
 
-      // DEBUG LOGS
-      // console.log("completedAt raw:", task.completedAt);
-      // console.log("converted date:", date);
-      // console.log("weekStart:", weekStart);
-      // console.log("weekEnd:", weekEnd);
+      completed.forEach((task) => {
+        const timestamp = task.completedAt || task.createdAt;
+        if (!timestamp) return;
 
-      if (!dateInRange(date, weekStart, weekEnd)) {
-        console.log("OUTSIDE WEEK RANGE");
-        return;
-      }
+        const date = timestamp?.toDate
+          ? timestamp.toDate()
+          : new Date(timestamp);
+        if (!dateInRange(date, rangeStart, rangeEnd)) return;
 
-      const idx = dayIndexFromDate(date);
+        const idx = dayIndexFromDate(date);
+        weekCounts[idx] += 1;
+      });
 
-      console.log("DAY INDEX:", idx);
-
-      weekCounts[idx] += 1;
-      console.log("date:", date);
-      console.log("day index:", idx);
-    });
-
-    return {
-      total: tasks.length,
-      completed: completed.length,
-      notCompleted: notCompleted.length,
-
-      pieData: [
-        {
-          value: completed.length,
-          color: "#4A90E2",
-          text: `${completed.length}`,
-        },
-        {
-          value: notCompleted.length,
-          color: "#C4C4C4",
-          text: `${notCompleted.length}`,
-        },
-      ],
-
-      barData: weekdayNames.map((label, i) => ({
+      barData = weekdayNames.map((label, i) => ({
         value: weekCounts[i],
         label,
         frontColor: "#302ECC",
-      })),
+      }));
+
+      chartTitle = "Tasks Completed This Week";
+
+      return {
+        total: filteredTasks.length,
+        completed: completed.length,
+        notCompleted: notCompleted.length,
+        chartTitle,
+        pieData: [
+          {
+            value: completed.length,
+            color: "#4A90E2",
+            text: `${completed.length}`,
+          },
+          {
+            value: notCompleted.length,
+            color: "#C4C4C4",
+            text: `${notCompleted.length}`,
+          },
+        ],
+        barData,
+      };
+    }
+
+    if (range === "month") {
+      // Month view: show task activity across the current calendar month.
+      rangeStart = getMonthStart(today);
+      rangeEnd = getMonthEnd(today);
+
+      filteredTasks = tasks.filter((task) => {
+        const timestamp = task.completedAt || task.dueDate || task.createdAt;
+        if (!timestamp) return false;
+
+        const date = timestamp?.toDate
+          ? timestamp.toDate()
+          : new Date(timestamp);
+        return dateInRange(date, rangeStart, rangeEnd);
+      });
+
+      const completed = filteredTasks.filter((t) => t.status === "approved");
+      const notCompleted = filteredTasks.filter(
+        (t) => !t.status || t.status === "notdone",
+      );
+
+      const weeklyCounts = [0, 0, 0, 0, 0];
+
+      completed.forEach((task) => {
+        const timestamp = task.completedAt || task.createdAt;
+        if (!timestamp) return;
+
+        const date = timestamp?.toDate
+          ? timestamp.toDate()
+          : new Date(timestamp);
+        if (!dateInRange(date, rangeStart, rangeEnd)) return;
+
+        const dayOfMonth = date.getDate();
+        let weekIndex = Math.floor((dayOfMonth - 1) / 7);
+        if (weekIndex > 4) weekIndex = 4;
+
+        weeklyCounts[weekIndex] += 1;
+      });
+
+      barData = weeklyCounts.map((value, i) => ({
+        value,
+        label: `W${i + 1}`,
+        frontColor: "#302ECC",
+      }));
+
+      chartTitle = "Tasks Completed This Month";
+
+      return {
+        total: filteredTasks.length,
+        completed: completed.length,
+        notCompleted: notCompleted.length,
+        chartTitle,
+        pieData: [
+          {
+            value: completed.length,
+            color: "#4A90E2",
+            text: `${completed.length}`,
+          },
+          {
+            value: notCompleted.length,
+            color: "#C4C4C4",
+            text: `${notCompleted.length}`,
+          },
+        ],
+        barData,
+      };
+    }
+
+    if (range === "year") {
+      // Year view: aggregate completed tasks by month for the current year.
+      rangeStart = getYearStart(today);
+      rangeEnd = getYearEnd(today);
+
+      filteredTasks = tasks.filter((task) => {
+        const timestamp = task.completedAt || task.dueDate || task.createdAt;
+        if (!timestamp) return false;
+
+        const date = timestamp?.toDate
+          ? timestamp.toDate()
+          : new Date(timestamp);
+        return dateInRange(date, rangeStart, rangeEnd);
+      });
+
+      const completed = filteredTasks.filter((t) => t.status === "approved");
+      const notCompleted = filteredTasks.filter(
+        (t) => !t.status || t.status === "notdone",
+      );
+
+      const monthCounts = new Array(12).fill(0);
+
+      completed.forEach((task) => {
+        const timestamp = task.completedAt || task.createdAt;
+        if (!timestamp) return;
+
+        const date = timestamp?.toDate
+          ? timestamp.toDate()
+          : new Date(timestamp);
+        if (!dateInRange(date, rangeStart, rangeEnd)) return;
+
+        const monthIndex = date.getMonth();
+        monthCounts[monthIndex] += 1;
+      });
+
+      barData = monthNames.map((label, i) => ({
+        value: monthCounts[i],
+        label,
+        frontColor: "#302ECC",
+      }));
+
+      chartTitle = "Tasks Completed This Year";
+
+      return {
+        total: filteredTasks.length,
+        completed: completed.length,
+        notCompleted: notCompleted.length,
+        chartTitle,
+        pieData: [
+          {
+            value: completed.length,
+            color: "#4A90E2",
+            text: `${completed.length}`,
+          },
+          {
+            value: notCompleted.length,
+            color: "#C4C4C4",
+            text: `${notCompleted.length}`,
+          },
+        ],
+        barData,
+      };
+    }
+
+    return {
+      total: 0,
+      completed: 0,
+      notCompleted: 0,
+      chartTitle: "",
+      pieData: [],
+      barData: [],
     };
-  }, [tasks]);
+  }, [tasks, range]);
 
   return (
     <View className="mt-5 bg-[#E6E5FF] rounded-[40px] px-4 shadow-md relative h-[420px] items-center">
@@ -136,6 +305,21 @@ export default function ProgressStats() {
       </Text>
 
       <View className="h-[86%] w-full bg-white rounded-[40px] mt-2 shadow-md p-3">
+        <View className="flex-row justify-center gap-2 mb-2">
+          {["week", "month", "year"].map((item) => (
+            <Text
+              key={item}
+              onPress={() => setRange(item)}
+              className={`px-4 py-2 rounded-full overflow-hidden text-sm font-medium ${
+                range === item
+                  ? "bg-[#302ECC] text-white"
+                  : "bg-[#E6E5FF] text-[#302ECC]"
+              }`}
+            >
+              {item.charAt(0).toUpperCase() + item.slice(1)}
+            </Text>
+          ))}
+        </View>
         <PagerView style={{ flex: 1 }} initialPage={0}>
           {/* PIE CHART */}
           <View key="1" className="flex-1 items-center justify-center">
@@ -177,7 +361,7 @@ export default function ProgressStats() {
           {/* BAR CHART */}
           <View key="2" className="flex-1 items-center justify-center">
             <Text className="text-[#393F74] font-bold text-lg text-center mb-3">
-              Tasks Completed This Week
+              {stats.chartTitle}
             </Text>
             <BarChart
               data={stats.barData}

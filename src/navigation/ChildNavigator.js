@@ -7,6 +7,7 @@ import ChildPet from "../screens/child/ChildPet";
 const Tab = createBottomTabNavigator();
 
 export default function ChildNavigator() {
+  // Bottom tab navigator for child mode with Home and Pet screens
   const { setMode } = useMode();
   return (
     <Tab.Navigator

@@ -5,6 +5,8 @@ import {
   getDocs,
   onSnapshot,
   query,
+  Timestamp,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import {
@@ -15,6 +17,7 @@ import {
   useState,
 } from "react";
 import { db } from "../../config/FirebaseConfig";
+import { reconcileRecurringTasks } from "../services/taskService";
 import { useAuth } from "./AuthContext";
 
 const AppDataContext = createContext(null);
@@ -27,28 +30,62 @@ export function AppDataProvider({ children }) {
   const [pet, setPet] = useState(null);
   const [loading, setLoading] = useState(true);
   const [childAccessories, setAccessories] = useState([]);
+  const [lastSeenLevel, setLastSeenLevel] = useState(null);
+  const [pendingLevelUp, setPendingLevelUp] = useState(null);
 
-  // fetchData is still useful for initial load/refresh, but child is now real-time
+  /*
+    Mood logic
+  */
+  const getMoodFromStats = (health, hunger, happiness) => {
+    // Determine the pet's mood based on its current stats
+    // all high → happy
+    if (health >= 60 && hunger >= 60 && happiness >= 60) {
+      return "happy";
+    }
+
+    // find lowest stat
+    const minStat = Math.min(health, hunger, happiness);
+
+    // if lowest is low → show problem
+    if (minStat < 40) {
+      if (minStat === health) return "sad";
+
+      if (minStat === hunger) return "hungry";
+
+      return "sad"; // low happiness = neutral smile
+    }
+
+    // otherwise neutral
+    return "smile";
+  };
+
+  /*
+    initial fetch
+  */
   const fetchData = useCallback(async () => {
+    // Fetch parent, child, pet, and accessory data from Firestore on app load
     if (!user) return;
 
     setLoading(true);
 
     try {
-      // 1️⃣ Fetch parent
+      // Fetch parent data
       const parentSnap = await getDoc(doc(db, "Parent", user.uid));
 
       if (!parentSnap.exists()) {
         setLoading(false);
+
         return;
       }
 
-      const parentData = { id: parentSnap.id, ...parentSnap.data() };
+      const parentData = {
+        id: parentSnap.id,
+        ...parentSnap.data(),
+      };
+
       setParent(parentData);
 
-      // 2️⃣ The child document will be handled by a live listener below, so we
-      //    only load once here to populate things quickly. After that the
-      //    snapshot callback will keep state up to date.
+      // Fetch child data associated with this parent
       const q = query(
         collection(db, "Child"),
         where("parentID", "==", parentData.id),
@@ -58,39 +95,63 @@ export function AppDataProvider({ children }) {
 
       if (!childSnap.empty) {
         const childDoc = childSnap.docs[0];
-        const childData = { id: childDoc.id, ...childDoc.data() };
+
+        const childData = {
+          id: childDoc.id,
+          ...childDoc.data(),
+        };
+
         setChild(childData);
 
-        // initialize pet too
+        await reconcileRecurringTasks(childData.id);
+
+        // Load pet colour and mood images
         const petData = childData.pet;
+
         if (petData) {
           let imageURL = null;
+
           if (petData.colourID) {
             const colourSnap = await getDoc(
               doc(db, "Colours", petData.colourID),
             );
+
             if (colourSnap.exists()) {
               imageURL = colourSnap.data().imageURL;
             }
           }
-          // initialising moodURL here as well since it's needed for the Avatar
+
+          // Load mood image
           let moodImageURL = null;
+
           if (petData.mood) {
             const moodSnap = await getDoc(doc(db, "Mood", petData.mood));
+
             if (moodSnap.exists()) {
               moodImageURL = moodSnap.data().imageURL;
             }
           }
-          setPet({ ...petData, imageURL, moodImageURL });
+
+          setPet({
+            ...petData,
+            imageURL,
+            moodImageURL,
+          });
         }
-        // fetch accessories for shop
+
+        // Fetch child's accessories
         const accessoryQuery = query(
           collection(db, "ChildAccessory"),
           where("childID", "==", childData.id),
         );
+
         const accessorySnap = await getDocs(accessoryQuery);
+
         setAccessories(
-          accessorySnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+          accessorySnap.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })),
         );
       }
     } catch (err) {
@@ -100,24 +161,78 @@ export function AppDataProvider({ children }) {
     setLoading(false);
   }, [user]);
 
-  // 🔑 rerun when user changes
+  /*
+    stat decay
+  */
+  const applyPetStatDecay = async (childData) => {
+    // Reduce pet stats over time if the child hasn't been active
+    if (!childData?.lastStatusUpdate) return;
+
+    const now = new Date();
+
+    const lastUpdate =
+      typeof childData.lastStatusUpdate.toDate === "function"
+        ? childData.lastStatusUpdate.toDate()
+        : new Date(childData.lastStatusUpdate);
+
+    const daysPassed = Math.floor((now - lastUpdate) / (1000 * 60 * 60 * 24));
+
+    if (daysPassed <= 0) return;
+
+    const decreaseAmount = daysPassed * 10;
+
+    await updateDoc(doc(db, "Child", childData.id), {
+      hunger: Math.max(0, childData.hunger - decreaseAmount),
+
+      happiness: Math.max(0, childData.happiness - decreaseAmount),
+
+      health: Math.max(0, childData.health - decreaseAmount),
+
+      lastStatusUpdate: Timestamp.now(),
+    });
+  };
+
+  /*
+    realtime listeners
+  */
   useEffect(() => {
+    // Set up real-time listeners for parent and child data changes
     fetchData();
 
-    // also start real-time listener for child data so that changes in
-    // Firestore propagate automatically. we listen on query by parentID and
-    // update state to the first matching child.
     let unsubscribeChild = null;
+
+    let unsubscribeParent = null;
+
     if (user) {
-      // we'll listen on Child collection and filter by parentID
+      // Listen for parent data updates
+      unsubscribeParent = onSnapshot(
+        doc(db, "Parent", user.uid),
+
+        (parentSnap) => {
+          if (parentSnap.exists()) {
+            setParent({
+              id: parentSnap.id,
+              ...parentSnap.data(),
+            });
+          }
+        },
+      );
+
+      // Listen for child data updates
       const q = query(
         collection(db, "Child"),
         where("parentID", "==", user.uid),
       );
+
       unsubscribeChild = onSnapshot(q, (snapshot) => {
         if (!snapshot.empty) {
           const childDoc = snapshot.docs[0];
-          const childData = { id: childDoc.id, ...childDoc.data() };
+
+          const childData = {
+            id: childDoc.id,
+            ...childDoc.data(),
+          };
+
           setChild(childData);
         } else {
           setChild(null);
@@ -127,64 +242,116 @@ export function AppDataProvider({ children }) {
 
     return () => {
       unsubscribeChild && unsubscribeChild();
+
+      unsubscribeParent && unsubscribeParent();
     };
   }, [user, fetchData]);
 
-  // 🔍 correct way to log state changes
+  /*
+    update pet images + mood when child changes
+  */
   useEffect(() => {
-    // console.log(user.uid);
-    // console.log("PARENT:", parent);
-    // console.log("CHILD:", child);
-    // console.log("PET:", pet);
-  }, [parent, child, pet]);
+    // Load pet images and update mood when child data changes
+    if (child && lastSeenLevel === null) {
+      setLastSeenLevel(child.level ?? 0);
+    }
 
-  // whenever the child object changes (including from the real-time
-  // listener) refresh any associated pet data such as images.
-  useEffect(() => {
+    const currentLevel = child?.level ?? 0;
+    if (child && lastSeenLevel != null && currentLevel > lastSeenLevel) {
+      setPendingLevelUp(currentLevel);
+    }
+
     const loadPetResources = async () => {
+      // Load and update pet colour and mood images
       if (!child || !child.pet) {
         setPet(null);
+
         return;
       }
 
+      await applyPetStatDecay(child);
+
       const petData = child.pet;
+
+      // Determine the correct mood based on current stats
+      const correctMood = getMoodFromStats(
+        child.health,
+        child.hunger,
+        child.happiness,
+      );
+
+      // Update mood in Firestore if it has changed
+      if (petData.mood !== correctMood) {
+        await updateDoc(doc(db, "Child", child.id), {
+          "pet.mood": correctMood,
+        });
+
+        petData.mood = correctMood;
+      }
+
+      // Fetch colour image URL
       let imageURL = null;
+
       if (petData.colourID) {
         const colourSnap = await getDoc(doc(db, "Colours", petData.colourID));
+
         if (colourSnap.exists()) {
           imageURL = colourSnap.data().imageURL;
         }
       }
+
+      // Fetch mood image URL
       let moodImageURL = null;
+
       if (petData.mood) {
         const moodSnap = await getDoc(doc(db, "Mood", petData.mood));
+
         if (moodSnap.exists()) {
           moodImageURL = moodSnap.data().imageURL;
         }
       }
 
-      setPet({ ...petData, imageURL, moodImageURL });
+      setPet({
+        ...petData,
+
+        imageURL,
+
+        moodImageURL,
+      });
     };
+
     loadPetResources();
   }, [child]);
 
-  // Real-time accessory listener for current child
+  /*
+    realtime accessories
+  */
   useEffect(() => {
+    // Listen for real-time updates to the child's accessories
     if (!child?.id) {
       setAccessories([]);
+
       return;
     }
 
     const accessoryQuery = query(
       collection(db, "ChildAccessory"),
+
       where("childID", "==", child.id),
     );
 
-    const unsubscribeAccessories = onSnapshot(accessoryQuery, (snapshot) => {
-      setAccessories(
-        snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
-      );
-    });
+    const unsubscribeAccessories = onSnapshot(
+      accessoryQuery,
+
+      (snapshot) => {
+        setAccessories(
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })),
+        );
+      },
+    );
 
     return () => unsubscribeAccessories();
   }, [child?.id]);
@@ -200,6 +367,10 @@ export function AppDataProvider({ children }) {
         loading,
         childAccessories,
         refreshData: fetchData,
+        lastSeenLevel,
+        setLastSeenLevel,
+        pendingLevelUp,
+        setPendingLevelUp,
       }}
     >
       {children}
