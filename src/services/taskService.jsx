@@ -49,6 +49,16 @@ const getNextDueDate = (recurrenceDay, fromDate) => {
   return nextDate;
 };
 
+const formatDateId = (date) => {
+  const jsDate = date?.toDate ? date.toDate() : new Date(date);
+
+  const year = jsDate.getFullYear();
+  const month = String(jsDate.getMonth() + 1).padStart(2, "0");
+  const day = String(jsDate.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
 export const createTask = async (taskData, docRef = null) => {
   // If a docRef is provided (for recurring tasks with seriesId), use setDoc
   if (docRef) {
@@ -277,12 +287,26 @@ export const reconcileRecurringTasks = async (childID) => {
       const alreadyExists = recurringTasks.some((existingTask) => {
         const sameSeries =
           (existingTask.seriesId || existingTask.id) === seriesId;
+
         return sameSeries && isSameDay(existingTask.dueDate, nextDueDate);
       });
 
       if (alreadyExists) continue;
 
-      await addDoc(collection(db, "Task"), {
+      const nextDateId = formatDateId(nextDueDate);
+
+      // This fixed ID prevents duplicate recurring tasks being created
+      // if reconcileRecurringTasks runs more than once at the same time.
+      const newTaskId = `${seriesId}_${nextDateId}`;
+      const newTaskRef = doc(db, "Task", newTaskId);
+
+      const existingNextTask = await getDoc(newTaskRef);
+
+      if (existingNextTask.exists()) {
+        continue;
+      }
+
+      await setDoc(newTaskRef, {
         approvalNeeded: task.approvalNeeded,
         approvedBy: null,
         category: task.category,
