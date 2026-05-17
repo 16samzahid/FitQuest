@@ -1,3 +1,5 @@
+// approve task card
+// this card is shown in the parent dashboard for tasks waiting for approval
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useRef } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
@@ -8,10 +10,11 @@ export default function ApproveTaskCard({
   xp = 10,
   taskID,
 }) {
+  // animated value used to slide the card away after approve/reject
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-  // helper to animate and call service
   const animateAndCall = (callback) => {
+    // slide the card left first, then run the approve or reject action
     Animated.timing(slideAnim, {
       toValue: 1,
       duration: 500,
@@ -22,13 +25,17 @@ export default function ApproveTaskCard({
   };
 
   const handleReject = () => {
+    // reject sends the task back to "notdone" so the child can try again
     animateAndCall(() => rejectTask(taskID));
   };
 
   const handleConfirm = () => {
+    // approve marks the task as approved and gives the child their rewards
     animateAndCall(() => approveTask(taskID));
   };
 
+  // converts the animation value into horizontal movement
+  // this makes the whole card slide off screen
   const translateX = slideAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0, -500],
@@ -46,23 +53,25 @@ export default function ApproveTaskCard({
           elevation: 5,
         }}
       >
-        {/* Accent bar */}
+        {/* small accent bar to make the card stand out visually */}
         <View className="absolute left-0 h-[70%] w-[6px] bg-[#4F46E5] rounded-r-full" />
 
-        {/* Left Side */}
+        {/* task information */}
         <View className="ml-3">
+          {/* task description */}
           <Text className="text-[#1E1B8F] text-[16px] font-semibold">
             {text}
           </Text>
 
+          {/* xp reward shown so the parent knows what the child will receive */}
           <Text className="text-[#7F7DCE] text-[13px] mt-1">
             Reward: {xp} XP
           </Text>
         </View>
 
-        {/* Right Side Buttons */}
+        {/* approve/reject buttons */}
         <View className="flex-row gap-2">
-          {/* Reject */}
+          {/* reject button */}
           <Pressable
             onPress={handleReject}
             className="w-10 h-10 rounded-full bg-[#EF4444] items-center justify-center active:scale-95"
@@ -70,7 +79,7 @@ export default function ApproveTaskCard({
             <MaterialCommunityIcons name="close" size={20} color="white" />
           </Pressable>
 
-          {/* Confirm */}
+          {/* confirm/approve button */}
           <Pressable
             onPress={handleConfirm}
             className="w-10 h-10 rounded-full bg-[#4F46E5] items-center justify-center active:scale-95"

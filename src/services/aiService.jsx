@@ -1,4 +1,4 @@
-// AI service uses Firebase's Gemini backend for task suggestion generation.
+// this service handles ai-generated task suggestions using firebase gemini
 import {
   getAI,
   getGenerativeModel,
@@ -7,9 +7,10 @@ import {
 } from "firebase/ai";
 import { app } from "../../config/FirebaseConfig";
 
+// set up firebase ai using the app configuration
 const ai = getAI(app, { backend: new GoogleAIBackend() });
 
-// Define the JSON schema that the AI model should return.
+// this tells the ai what structure the response should follow
 const jsonSchema = Schema.object({
   properties: {
     description: Schema.string(),
@@ -18,6 +19,7 @@ const jsonSchema = Schema.object({
   },
 });
 
+// create the gemini model and ask it to return json
 const model = getGenerativeModel(ai, {
   model: "gemini-2.5-flash-lite",
   generationConfig: {
@@ -27,12 +29,13 @@ const model = getGenerativeModel(ai, {
 });
 
 export async function generateTaskSuggestion(child, completedTasks = []) {
+  // child data is needed so the suggestion can be based on their current stats
   if (!child) {
     throw new Error("Child data is required for AI suggestion");
   }
 
-  // Build a prompt for the Gemini model that includes child state and completed tasks.
-  // The response is constrained to a small JSON object so parsing is predictable.
+  // build the prompt using the child's stats and their recent completed tasks
+  // this helps the ai suggest something balanced and not too repetitive
   const prompt = `
 Suggest one child-friendly task for a health and exercise app.
 
@@ -58,6 +61,7 @@ Return only JSON:
 `;
 
   try {
+    // send the prompt to gemini and get the response
     const result = await model.generateContent(prompt);
 
     if (!result || !result.response) {
@@ -70,22 +74,24 @@ Return only JSON:
       throw new Error("Empty response text from AI model");
     }
 
-    // Extract JSON from markdown code blocks if present
+    // remove markdown code block formatting if the ai includes it
     const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
     if (jsonMatch) {
       text = jsonMatch[1];
     }
 
-    // Extract JSON object if wrapped in extra characters
+    // make sure only the json object is parsed
     const objectMatch = text.match(/\{[\s\S]*\}/);
     if (objectMatch) {
       text = objectMatch[0];
     }
 
+    // convert the json text into a normal javascript object
     text = text.trim();
     const parsed = JSON.parse(text);
     return parsed;
   } catch (error) {
+    // give clearer errors for common ai issues
     if (error.message?.includes("AbortSignal")) {
       console.error("AI Service Error: AbortSignal compatibility issue", error);
       throw new Error("AI service unavailable. Please try again in a moment.");
@@ -98,6 +104,7 @@ Return only JSON:
       console.error("AI Service Error: Model overloaded", error);
       throw new Error("AI service is busy. Please try again in a moment.");
     }
+
     console.error("AI Service Error:", error);
     throw error;
   }

@@ -1,3 +1,6 @@
+// add task modal
+// this popup is used by the parent to create a new task for the child
+// it supports one-time tasks, weekly repeating tasks, task history, and ai suggestions
 import AntDesign from "@expo/vector-icons/AntDesign";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Checkbox from "expo-checkbox";
@@ -18,28 +21,34 @@ import { generateTaskSuggestion } from "../services/aiService";
 import { getCompletedTasks } from "../services/taskService";
 
 export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
+  // get the current child so ai suggestions can use their current stats
   const { child } = useAppData();
+
+  // main form fields for the new task
   const [description, setDescription] = useState("");
   const [approvalNeeded, setApprovalNeeded] = useState(true);
   const [category, setCategory] = useState(null);
   const [coins, setCoins] = useState("");
   const [validationError, setValidationError] = useState("");
 
-  // due date
+  // due date is used for one-time tasks only
   const [dueDate, setDueDate] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
 
-  // recurring
+  // recurring task state
+  // if isRecurring is true, the parent selects a weekday instead of a due date
   const [isRecurring, setIsRecurring] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
 
-  // completed tasks history
+  // stores previously completed tasks so the parent can reuse old ideas
   const [completedTasks, setCompletedTasks] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
 
-  // AI loading state
+  // tracks when the ai suggestion is loading
   const [aiLoading, setAiLoading] = useState(false);
 
+  // fixed task categories used across the app
+  // these match the categories used for pet stat rewards
   const categories = [
     { label: "Exercise", value: "Exercise" },
     { label: "Learning", value: "Learning" },
@@ -49,6 +58,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
     { label: "Water", value: "Water" },
   ];
 
+  // fixed coin values so rewards stay controlled
   const coinOptions = [
     { label: "5", value: "5" },
     { label: "10", value: "10" },
@@ -56,6 +66,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
     { label: "20", value: "20" },
   ];
 
+  // full weekday names are saved as recurrence values in firestore
   const weekdays = [
     "Sunday",
     "Monday",
@@ -66,33 +77,39 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
     "Saturday",
   ];
 
-  // load completed tasks when modal opens or childID changes
   useEffect(() => {
+    // when the modal opens, load this child's completed tasks for the history section
     if (visible && childID) {
       const fetchCompletedTasks = async () => {
         const tasks = await getCompletedTasks(childID);
         setCompletedTasks(tasks);
       };
+
       fetchCompletedTasks();
     }
   }, [visible, childID]);
 
-  // reset form when modal closes
   const selectFromHistory = (task) => {
+    // fills the form using a previously completed task
+    // this helps the parent quickly recreate a similar task
     setDescription(task.description);
     setApprovalNeeded(task.approvalNeeded);
     setCategory(task.category);
     setCoins(task.coins.toString());
-    // setDueDate(task.dueDate ? task.dueDate.toDate() : null);
+
+    // if the old task was recurring, restore its recurring setting
     setIsRecurring(!!task.recurrence);
+
     if (task.recurrence) {
       setSelectedDay(weekdays.indexOf(task.recurrence));
     }
+
     setShowHistory(false);
   };
 
-  // toggle weekday selection for recurring tasks
   const toggleDay = (index) => {
+    // allows one weekday to be selected for a repeating task
+    // pressing the same day again removes the selection
     if (selectedDay === index) {
       setSelectedDay(null);
     } else {
@@ -100,18 +117,21 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
     }
   };
 
-  // get the ai task suggestion and use it to set fields in form
   const getAISuggestion = async () => {
     try {
+      // ai suggestions need child data, such as pet stats
       if (!child) {
         Alert.alert("Error", "No child selected");
         return;
       }
 
       setAiLoading(true);
+
+      // ask the ai service for one task suggestion
       const suggestion = await generateTaskSuggestion(child);
       console.log("AI suggestion:", suggestion);
 
+      // use the ai response to fill the form fields
       if (suggestion) {
         setDescription(suggestion.description || "");
         setCategory(suggestion.category || null);
@@ -119,6 +139,8 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
       }
     } catch (error) {
       console.error("Error getting AI suggestion:", error);
+
+      // show a clear message if the ai feature fails
       Alert.alert(
         "Error",
         error.message || "Could not get AI suggestion. Please try again.",
@@ -128,48 +150,56 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
     }
   };
 
-  // validate form and call onCreate prop with task data
   const handleCreate = () => {
+    // clear any old validation message before checking the form again
     setValidationError("");
 
+    // validation checks stop incomplete tasks being saved
     if (!child) {
       setValidationError("No child selected.");
       return false;
     }
+
     if (!description.trim()) {
       setValidationError("Task description cannot be empty.");
       return false;
     }
+
     if (!category) {
       setValidationError("Please select a category.");
       return false;
     }
+
     if (!coins) {
       setValidationError("Please select a coin reward.");
       return false;
     }
+
     if (isRecurring && selectedDay === null) {
       setValidationError("Please select a day for the recurring task.");
       return false;
     }
+
     if (!isRecurring && !dueDate) {
       setValidationError("Please select a due date for one-time tasks.");
       return false;
     }
 
-    // prop that calls parent function to create task in firestore
+    // send the completed task data back to the parent screen
+    // ManageTasks then creates the firestore document
     onCreate({
       description: description.trim(),
       approvalNeeded,
       category,
       coins: Number(coins),
-      // only one of these will be filled
+
+      // one-time tasks use dueDate, recurring tasks use recurrence
       dueDate: isRecurring ? null : dueDate,
       recurrence:
         isRecurring && selectedDay !== null ? weekdays[selectedDay] : null,
     });
 
-    // reset form
+    // reset form after a successful create
     setDescription("");
     setApprovalNeeded(true);
     setCategory(null);
@@ -185,13 +215,14 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
 
   return (
     <Modal transparent visible={visible} animationType="fade">
+      {/* dark background overlay behind the modal */}
       <View className="flex-1 bg-black/40 justify-center items-center px-6">
         <View className="w-full bg-white rounded-2xl p-4 shadow-md">
           <Text className="text-xl font-bold text-[#150F59] mb-2">
             Create Task
           </Text>
 
-          {/* Validation error message */}
+          {/* shows validation errors above the form */}
           {validationError ? (
             <View className="bg-red-50 border border-red rounded-lg p-3 mb-4">
               <Text className="text-red">{validationError}</Text>
@@ -199,6 +230,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
           ) : null}
 
           <View className="flex-row items-center justify-between mb-4">
+            {/* task history button only appears if there are completed tasks to reuse */}
             {completedTasks.length > 0 && (
               <Pressable
                 onPress={() => setShowHistory(!showHistory)}
@@ -210,7 +242,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
               </Pressable>
             )}
 
-            {/* AI Suggestion Button */}
+            {/* ai suggestion button fills the form with an ai-generated task */}
             <Pressable
               onPress={getAISuggestion}
               disabled={aiLoading}
@@ -226,16 +258,17 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
             </Pressable>
           </View>
 
-          {/* Completed tasks history */}
+          {/* completed task history list */}
           {showHistory && (
             <View className="mb-4 max-h-48">
               <Text className="text-lg font-semibold mb-2">
                 Completed Tasks:
               </Text>
+
               <ScrollView>
                 {completedTasks
                   .reduce((uniqueTasks, task) => {
-                    // Only include if we haven't seen this description before
+                    // remove duplicate descriptions so the history list is not repetitive
                     if (
                       !uniqueTasks.find(
                         (t) => t.description === task.description,
@@ -243,16 +276,18 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
                     ) {
                       uniqueTasks.push(task);
                     }
+
                     return uniqueTasks;
                   }, [])
                   .map((task) => (
-                    // map each history task to a pressable item that fills form when pressed
+                    // pressing a history item copies its values into the form
                     <Pressable
                       key={task.id}
                       onPress={() => selectFromHistory(task)}
                       className="p-2 mb-1 bg-blue-50 rounded border"
                     >
                       <Text className="text-gray-800">{task.description}</Text>
+
                       <Text className="text-sm text-gray-600">
                         {task.category} - {task.coins} coins
                       </Text>
@@ -262,7 +297,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
             </View>
           )}
 
-          {/* Description */}
+          {/* task description input */}
           <TextInput
             value={description}
             onChangeText={setDescription}
@@ -272,7 +307,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
             className="border border-gray-200 rounded-lg p-3 mb-4 text-lg"
           />
 
-          {/* Category */}
+          {/* category dropdown */}
           <Dropdown
             data={categories}
             labelField="label"
@@ -294,7 +329,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
             inputSearchStyle={{ color: "#111827", fontSize: 16 }}
           />
 
-          {/* Coins */}
+          {/* coin reward dropdown */}
           <Dropdown
             data={coinOptions}
             labelField="label"
@@ -316,7 +351,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
             inputSearchStyle={{ color: "#111827", fontSize: 16 }}
           />
 
-          {/* Repeat Task Checkbox */}
+          {/* checkbox for making the task repeat weekly */}
           <View className="flex-row justify-end mb-4 items-center">
             <Text className="mr-3 text-gray-700 text-lg">Repeating Task</Text>
 
@@ -325,14 +360,14 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
               onValueChange={(value) => {
                 setIsRecurring(value);
 
-                // remove due date if switching to recurring
+                // recurring tasks do not use a one-time due date
                 if (value) setDueDate(null);
               }}
               color={isRecurring ? "#4F46E5" : undefined}
             />
           </View>
 
-          {/* Weekday selector */}
+          {/* weekday selector only appears if the task is recurring */}
           {isRecurring && (
             <View className="mb-4">
               <Text className="text-gray-700 mb-2 text-lg">Repeat on:</Text>
@@ -362,11 +397,12 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
             </View>
           )}
 
-          {/* Due Date (only for one-time tasks) */}
+          {/* due date picker only appears for one-time tasks */}
           {!isRecurring && (
             <>
               <Pressable
                 onPress={() => {
+                  // default to today if no date has been selected yet
                   if (!dueDate) {
                     setDueDate(new Date());
                   }
@@ -390,6 +426,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
                   onChange={(event, selectedDate) => {
                     setShowPicker(false);
 
+                    // keep the selected date, or fall back to the previous/current date
                     setDueDate(selectedDate || dueDate || new Date());
                   }}
                 />
@@ -397,7 +434,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
             </>
           )}
 
-          {/* Approval Checkbox */}
+          {/* controls whether the parent must approve this task after the child completes it */}
           <View className="flex-row justify-end mb-4 items-center">
             <Text className="mr-3 text-gray-700 text-lg">
               Requires Parent Approval
@@ -410,11 +447,12 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
             />
           </View>
 
-          {/* Buttons */}
+          {/* modal buttons */}
           <View className="flex-row justify-end">
             <Pressable
               className="px-4 py-2 rounded-full bg-gray-200 mr-2"
               onPress={() => {
+                // clear key form values when cancelling
                 setDescription("");
                 setCoins("");
                 setDueDate(null);
@@ -431,6 +469,7 @@ export default function AddTaskModal({ visible, onClose, onCreate, childID }) {
             <Pressable
               className="px-4 py-2 rounded-full bg-indigo-600"
               onPress={() => {
+                // only close the modal if validation passes and task creation starts
                 if (handleCreate()) {
                   onClose();
                 }

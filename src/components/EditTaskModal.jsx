@@ -1,3 +1,6 @@
+// edit task modal
+// this popup is used when the parent wants to change an existing task
+// it lets them edit the description, category, coins, due date, recurrence and approval rule
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Checkbox from "expo-checkbox";
 import { useEffect, useState } from "react";
@@ -5,6 +8,7 @@ import { Modal, Pressable, Text, TextInput, View } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 
 export default function EditTaskModal({ visible, onClose, onEdit, task }) {
+  // form state is filled from the selected task
   const [description, setDescription] = useState(task?.description || "");
   const [approvalNeeded, setApprovalNeeded] = useState(
     task?.approvalNeeded || true,
@@ -12,15 +16,19 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
   const [category, setCategory] = useState(task?.category || null);
   const [coins, setCoins] = useState(task?.coins ? task.coins.toString() : "");
 
-  // due date
+  // stores the due date for one-time tasks
   const [dueDate, setDueDate] = useState(
     task?.dueDate ? task.dueDate.toDate() : null,
   );
+
+  // controls whether the date picker is shown
   const [showPicker, setShowPicker] = useState(true);
 
-  // recurring
+  // tracks whether this task should repeat weekly
   const [isRecurring, setIsRecurring] = useState(!!task?.recurrence);
 
+  // fixed task categories used in the dropdown
+  // these match the categories used for pet stat updates
   const categories = [
     { label: "Exercise", value: "Exercise" },
     { label: "Learning", value: "Learning" },
@@ -29,6 +37,7 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
     { label: "Play", value: "Play" },
   ];
 
+  // fixed coin values so parents choose from set rewards
   const coinOptions = [
     { label: "5", value: "5" },
     { label: "10", value: "10" },
@@ -36,6 +45,7 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
     { label: "20", value: "20" },
   ];
 
+  // full weekday names are saved as recurrence values in firestore
   const weekdays = [
     "Sunday",
     "Monday",
@@ -45,10 +55,14 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
     "Friday",
     "Saturday",
   ];
+
+  // stores which weekday is selected for a repeating task
   const [selectedDay, setSelectedDay] = useState(
     task?.recurrence ? weekdays.indexOf(task.recurrence) : null,
   );
+
   useEffect(() => {
+    // when a different task is selected, update the modal fields with its values
     if (!task) return;
 
     setDescription(task.description || "");
@@ -66,8 +80,8 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
     setSelectedDay(task.recurrence ? weekdays.indexOf(task.recurrence) : null);
   }, [task]);
 
-  // helper to toggle selected day for recurring tasks
   const toggleDay = (index) => {
+    // selecting the same day again clears it, otherwise it selects that weekday
     if (selectedDay === index) {
       setSelectedDay(null);
     } else {
@@ -75,10 +89,12 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
     }
   };
 
-  // Runs when the edit button is pressed
   const handleEdit = () => {
+    // do not save an empty task description
     if (!description.trim()) return;
 
+    // send the edited values back to the parent component
+    // the parent component/service then updates firestore
     onEdit({
       description: description.trim(),
 
@@ -88,8 +104,10 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
 
       coins: Number(coins),
 
+      // recurring tasks use recurrence instead of a normal due date
       dueDate: isRecurring ? null : (dueDate ?? task?.dueDate?.toDate()),
 
+      // save the selected weekday if this is a repeating task
       recurrence:
         isRecurring && selectedDay !== null ? weekdays[selectedDay] : null,
     });
@@ -97,13 +115,14 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
 
   return (
     <Modal transparent visible={visible} animationType="fade">
+      {/* dark background overlay behind the modal */}
       <View className="flex-1 bg-black/40 justify-center items-center px-6">
         <View className="w-full bg-white rounded-2xl p-4 shadow-md">
           <Text className="text-xl font-bold text-[#150F59] mb-2">
             Create Task
           </Text>
 
-          {/* Description */}
+          {/* task description input */}
           <TextInput
             value={description}
             onChangeText={setDescription}
@@ -113,7 +132,7 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
             className="border border-gray-200 rounded-lg p-3 mb-4 text-lg"
           />
 
-          {/* Category */}
+          {/* category dropdown */}
           <Dropdown
             data={categories}
             labelField="label"
@@ -135,7 +154,7 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
             inputSearchStyle={{ color: "#111827", fontSize: 16 }}
           />
 
-          {/* Coins */}
+          {/* coin reward dropdown */}
           <Dropdown
             data={coinOptions}
             labelField="label"
@@ -157,7 +176,7 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
             inputSearchStyle={{ color: "#111827", fontSize: 16 }}
           />
 
-          {/* Repeat Task Checkbox */}
+          {/* checkbox for making the task repeat */}
           <View className="flex-row justify-end mb-4 items-center">
             <Text className="mr-3 text-gray-700 text-lg">Repeating Task</Text>
 
@@ -166,14 +185,14 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
               onValueChange={(value) => {
                 setIsRecurring(value);
 
-                // remove due date if switching to recurring
+                // if it becomes recurring, remove the one-time due date
                 if (value) setDueDate(null);
               }}
               color={isRecurring ? "#4F46E5" : undefined}
             />
           </View>
 
-          {/* Weekday selector */}
+          {/* weekday selector only appears for repeating tasks */}
           {isRecurring && (
             <View className="mb-4">
               <Text className="text-gray-700 mb-2 text-lg">Repeat on:</Text>
@@ -203,11 +222,12 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
             </View>
           )}
 
-          {/* Due Date (only for one-time tasks) */}
+          {/* due date picker only appears for one-time tasks */}
           {!isRecurring && (
             <>
               <Pressable
                 onPress={() => {
+                  // if there is no date yet, start from today
                   if (!dueDate) {
                     setDueDate(new Date());
                   }
@@ -231,7 +251,7 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
                   onChange={(event, selectedDate) => {
                     setShowPicker(false);
 
-                    // only update if user actually picked a date
+                    // only update the date if the user actually picked one
                     if (selectedDate) {
                       setDueDate(selectedDate);
                     }
@@ -241,7 +261,7 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
             </>
           )}
 
-          {/* Approval Checkbox */}
+          {/* controls whether the child needs parent approval after completing the task */}
           <View className="flex-row justify-end mb-4 items-center">
             <Text className="mr-3 text-gray-700 text-lg">
               Requires Parent Approval
@@ -254,7 +274,7 @@ export default function EditTaskModal({ visible, onClose, onEdit, task }) {
             />
           </View>
 
-          {/* Buttons */}
+          {/* modal action buttons */}
           <View className="flex-row justify-end">
             <Pressable
               className="px-4 py-2 rounded-full bg-gray-200 mr-2"

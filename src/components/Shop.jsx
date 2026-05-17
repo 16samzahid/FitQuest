@@ -1,3 +1,5 @@
+// shop component for the child pet screen
+// this lets the child change pet colours and buy/equip accessories using coins
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { Audio } from "expo-av";
 import {
@@ -21,19 +23,25 @@ import { db } from "../../config/FirebaseConfig";
 import { useAppData } from "../context/AppDataContext";
 
 const Shop = () => {
-  // App data context provides the current pet, child, accessories, and refresh helper.
+  // get the pet, child, owned accessories and refresh function from app context
   const { pet, setPet, child, childAccessories, refreshData } = useAppData();
+
+  // controls whether the user is viewing colours or accessories
   const [activeTab, setActiveTab] = useState("colours");
+
+  // stores the available colours and accessories fetched from firestore
   const [colours, setColours] = useState([]);
   const [accessories, setAccessories] = useState([]);
+
+  // gets the screen width so the colour circles can be sized responsively
   const { width } = useWindowDimensions();
 
-  // Circle size for each colour item, accounting for padding and spacing.
+  // circle size for each colour item, accounting for padding and spacing
   const circleSize = (width - 60) / 3;
 
-  // Play a confirmation sound when an accessory purchase succeeds.
   const playSound = async () => {
     try {
+      // play a confirmation sound after a successful accessory purchase
       const { sound } = await Audio.Sound.createAsync(
         require("../../assets/sounds/purchase_success.mp3"),
       );
@@ -47,10 +55,13 @@ const Shop = () => {
     console.log(
       `Accessory ${item.id} pressed, owned: ${owned}, equipped: ${owned && childAccessories.find((a) => a.accessoryID === item.id)?.equipped}`,
     );
+
+    // stop if the child profile has not loaded
     if (!child) return;
 
     try {
       if (owned) {
+        // if the child already owns the accessory, pressing it toggles equipped/unequipped
         const accessoryDoc = childAccessories.find(
           (a) => a.accessoryID === item.id,
         );
@@ -60,20 +71,25 @@ const Shop = () => {
           equipped: !accessoryDoc.equipped,
         });
       } else {
+        // if the child does not own it yet, check they have enough coins first
         if (child.coins < item.price) {
           alert("Not enough coins!");
           return;
         }
 
+        // subtract the accessory price from the child's coins
         await updateDoc(doc(db, "Child", child.id), {
           coins: child.coins - item.price,
         });
 
+        // create a child-accessory record to show ownership
+        // equipped is true so the item is worn straight after purchase
         await addDoc(collection(db, "ChildAccessory"), {
           childID: child.id,
           accessoryID: item.id,
           equipped: true,
         });
+
         playSound();
       }
     } catch (error) {
@@ -81,25 +97,29 @@ const Shop = () => {
     }
   };
 
-  // Update the selected pet colour both locally and in Firestore.
   const changeColour = (colourId) => async () => {
+    // do not update colour if no child profile is available
     if (!child) {
       console.warn("changeColour called with no child");
       return;
     }
+
+    // optimistic update, so the selected colour changes immediately in the UI
     setPet((prev) => ({ ...prev, colourID: colourId }));
 
     try {
-      // optimistic update: show the new colour immediately while Firestore updates.
+      // fetch the selected colour document so the pet image can also be updated
       const colourSnap = await getDoc(doc(db, "Colours", colourId));
 
       if (colourSnap.exists()) {
         const imageURL = colourSnap.data().imageURL;
 
+        // save the selected colour to the child's pet data in firestore
         await updateDoc(doc(db, "Child", child.id), {
           "pet.colourID": colourId,
         });
 
+        // update the local pet data with both the colour id and image url
         setPet((prev) => ({ ...prev, colourID: colourId, imageURL }));
       }
     } catch (error) {
@@ -107,9 +127,9 @@ const Shop = () => {
     }
   };
 
-  // Load the shop product data from Firestore once when the component mounts.
   const fetchShopData = async () => {
     try {
+      // load all available pet colours and accessories from firestore
       const colourSnap = await getDocs(collection(db, "Colours"));
       const accessorySnap = await getDocs(collection(db, "Accessories"));
 
@@ -136,13 +156,13 @@ const Shop = () => {
   };
 
   useEffect(() => {
-    // Fetch the available colours and accessories when the shop opens.
+    // fetch the available colours and accessories when the shop first loads
     fetchShopData();
   }, []);
 
   return (
     <View className="rounded-t-3xl flex-1 w-full mt-5">
-      {/* Tabs */}
+      {/* tabs let the child switch between colour customisation and accessories */}
       <View className="flex-row">
         <Pressable
           onPress={() => setActiveTab("colours")}
@@ -163,16 +183,17 @@ const Shop = () => {
         </Pressable>
       </View>
 
-      {/* Content */}
+      {/* scrollable shop content */}
       <ScrollView
         className="flex-1 bg-gray-300 p-4"
         contentContainerStyle={{ paddingBottom: 40 }}
       >
-        {/* COLOURS TAB */}
+        {/* colours tab shows available pet colours */}
         {activeTab === "colours" ? (
           <View className="flex-row flex-wrap">
             {colours.map((colour) => (
               <View key={colour.id} className="w-1/3 items-center mb-4">
+                {/* pressing a colour updates the pet colour */}
                 <Pressable
                   onPress={changeColour(colour.id)}
                   style={{
@@ -180,6 +201,8 @@ const Shop = () => {
                     height: circleSize,
                     borderRadius: circleSize / 2,
                     backgroundColor: colour.hex,
+
+                    // selected colour gets a thicker black border
                     borderWidth: pet?.colourID === colour.id ? 4 : 1,
                     borderColor:
                       pet?.colourID === colour.id ? "black" : "transparent",
@@ -193,18 +216,19 @@ const Shop = () => {
             ))}
           </View>
         ) : (
-          /* ACCESSORIES TAB */
+          /* accessories tab shows items the child can buy, own or equip */
           <View className="flex-row flex-wrap justify-between">
             {accessories.map((item) => {
+              // check if the child already owns this accessory
               const accessoryRecord = childAccessories?.find(
                 (a) => a.accessoryID === item.id,
               );
+
               const owned = !!accessoryRecord;
               const equipped = accessoryRecord?.equipped;
 
               return (
-                // pressable card for each accessory, showing image, name, price, and owned/equipped status.
-                // Pressing triggers purchase or equip action.
+                // pressing the card either buys the item or toggles whether it is equipped
                 <Pressable
                   key={item.id}
                   className={`h-40 w-40 rounded-xl bg-white mb-4 p-3 ${
@@ -214,7 +238,7 @@ const Shop = () => {
                   }`}
                   onPress={() => handleAccessoryPress(item, owned)}
                 >
-                  {/* Image */}
+                  {/* accessory image */}
                   <View className="flex-1 items-center justify-center">
                     <Image
                       source={{ uri: item.thumbnailURL }}
@@ -223,12 +247,12 @@ const Shop = () => {
                     />
                   </View>
 
-                  {/* Name */}
+                  {/* accessory name */}
                   <Text className="text-center font-semibold text-lg mt-1">
                     {item.name}
                   </Text>
 
-                  {/* Price or Owned */}
+                  {/* show owned/equipped status if bought, otherwise show price */}
                   {owned ? (
                     <Text
                       className={`font-semibold text-center mt-1 ${

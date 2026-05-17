@@ -1,3 +1,5 @@
+// child home screen
+// this is the main daily screen where the child sees their pet, stats and tasks
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useIsFocused } from "@react-navigation/native";
 import { doc, updateDoc } from "firebase/firestore";
@@ -16,7 +18,10 @@ import { useAppData } from "../../context/AppDataContext";
 import { useMode } from "../../context/ModeContext";
 
 export default function ChildHome() {
+  // setMode is used to switch from child mode to parent mode after the pin is correct
   const { setMode } = useMode();
+
+  // get the child data and level-up state from the global app data context
   const {
     child,
     loading,
@@ -25,26 +30,40 @@ export default function ChildHome() {
     pendingLevelUp,
     setPendingLevelUp,
   } = useAppData();
+
+  // controls whether the parent pin modal is shown
   const [showPin, setShowPin] = useState(false);
+
+  // controls whether the welcome message appears for new users
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  // controls the level-up popup when the child gains a level
   const [showLevelUpModal, setShowLevelUpModal] = useState(false);
   const [showLevel, setShowLevel] = useState(null);
+
+  // checks whether this screen is currently active
+  // this avoids showing the level-up modal on the wrong screen
   const isFocused = useIsFocused();
 
   const handleCloseWelcomeModal = async () => {
     try {
+      // save that the welcome message has been seen so it does not show every time
       await updateDoc(doc(db, "Child", child.id), {
         hasSeenWelcomeMessage: true,
       });
+
       setShowWelcomeModal(false);
     } catch (error) {
       console.error("Error updating welcome message flag:", error);
       setShowWelcomeModal(false);
     }
   };
+
   useEffect(() => {
+    // wait until the child data has loaded before checking the welcome modal
     if (!child || loading) return;
 
+    // show the welcome modal only if this child has not seen it before
     if (child.hasSeenWelcomeMessage === false) {
       setShowWelcomeModal(true);
     } else {
@@ -53,6 +72,8 @@ export default function ChildHome() {
   }, [child, loading]);
 
   useEffect(() => {
+    // show the level-up modal only when there is a pending level-up
+    // and the child home screen is currently focused
     if (loading || !child || !isFocused || pendingLevelUp == null) return;
 
     setShowLevel(pendingLevelUp);
@@ -61,20 +82,25 @@ export default function ChildHome() {
 
   return (
     <SafeAreaView className="flex-1 px-4 pt-4" edges={["top"]}>
+      {/* welcome modal for first-time users */}
       <WelcomeModal
         visible={showWelcomeModal}
         onClose={handleCloseWelcomeModal}
       />
+
+      {/* level-up modal shown when the child reaches a new level */}
       <LevelUpModal
         visible={showLevelUpModal}
         level={showLevel}
         onClose={() => {
+          // close the popup and mark the current level as seen
           setShowLevelUpModal(false);
           setPendingLevelUp(null);
           setLastSeenLevel(child?.level ?? 0);
         }}
       />
-      {/* Switch button */}
+
+      {/* button used to open the parent pin modal */}
       <Pressable
         className="mt-4"
         onPress={() => setShowPin(true)}
@@ -90,20 +116,23 @@ export default function ChildHome() {
         <Ionicons name="swap-horizontal" size={40} color="#374151" />
       </Pressable>
 
-      {/* PIN overlay */}
+      {/* pin modal protects access to parent mode */}
       <PinModal
         visible={showPin}
         onClose={() => setShowPin(false)}
         onSuccess={() => {
+          // switch to parent mode only after the correct pin is entered
           setShowPin(false);
           setMode("parent");
         }}
       />
 
+      {/* personalised greeting using the child's name */}
       <Text className="text-2xl font-bold text-center text-indigo-700">
         Welcome {loading ? "..." : child ? child.name : "Guest"}!
       </Text>
-      {/* Avatar component shows the pet, mood, and speech bubble. */}
+
+      {/* pet avatar display with speech bubble for child feedback */}
       <View className="flex-row justify-center justify-evenly">
         <Avatar
           health={child?.health ?? 0}
@@ -113,17 +142,18 @@ export default function ChildHome() {
         />
       </View>
 
-      {/* Pet stats card displays health, hunger, and happiness values. */}
+      {/* shows the pet's current health, hunger and happiness stats */}
       <PetStatsCard
         health={child?.health ?? 0}
         hunger={child?.hunger ?? 0}
         happiness={child?.happiness ?? 0}
         loading={loading}
       />
-      {/* Completed task summary for today. */}
+
+      {/* shows how many tasks the child has completed today */}
       <TasksCompleted />
 
-      {/* Main task list for the child. */}
+      {/* main list of tasks the child can complete */}
       <Tasks />
     </SafeAreaView>
   );

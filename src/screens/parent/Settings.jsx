@@ -1,3 +1,6 @@
+// parent settings screen
+// this screen lets the parent update child details, change the parent pin,
+// manage default daily tasks, switch back to child mode, and sign out
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Checkbox from "expo-checkbox";
@@ -31,31 +34,42 @@ import { useMode } from "../../context/ModeContext";
 import { editChildName, editParentPin } from "../../services/userService";
 
 const Settings = () => {
-  // Parent settings screen for updating child name, parent PIN, and daily task rules.
+  // allows the parent to switch back to the child interface
   const { setMode } = useMode();
+
+  // gets the current child and parent data from global app data
   const { child, parent } = useAppData();
 
+  // controls whether the parent pin is shown or hidden
   const [showPin, setShowPin] = useState(false);
+
+  // controls the child name and parent pin edit modals
   const [nameModal, setNameModal] = useState(false);
   const [pinModal, setPinModal] = useState(false);
 
+  // local input values for editing the child name and parent pin
   const [newName, setNewName] = useState(child?.name || "");
   const [newPin, setNewPin] = useState(parent?.pin || "");
   const [pinError, setPinError] = useState("");
 
-  // Daily tasks state is used to display and manage recurring tasks from settings.
+  // stores the latest version of each daily recurring task
   const [dailyTasks, setDailyTasks] = useState([]);
+
+  // tracks whether the daily tasks are still loading
   const [loadingTasks, setLoadingTasks] = useState(true);
 
+  // controls the add and edit daily task modals
   const [addTaskModal, setAddTaskModal] = useState(false);
   const [editTaskModal, setEditTaskModal] = useState(false);
 
+  // stores the task currently being edited and the form values for add/edit task
   const [selectedTask, setSelectedTask] = useState(null);
   const [taskDescription, setTaskDescription] = useState("");
   const [taskCategory, setTaskCategory] = useState(null);
   const [taskCoins, setTaskCoins] = useState("");
   const [taskApprovalNeeded, setTaskApprovalNeeded] = useState(true);
 
+  // task categories available when adding or editing a daily task
   const categories = [
     { label: "Exercise", value: "Exercise" },
     { label: "Learning", value: "Learning" },
@@ -64,6 +78,7 @@ const Settings = () => {
     { label: "Play", value: "Play" },
   ];
 
+  // fixed coin reward options so parents cannot enter random reward values
   const coinOptions = [
     { label: "5", value: "5" },
     { label: "10", value: "10" },
@@ -72,15 +87,18 @@ const Settings = () => {
   ];
 
   useEffect(() => {
+    // keep the name input updated if the child data changes
     setNewName(child?.name || "");
   }, [child]);
 
   useEffect(() => {
+    // keep the pin input updated if the parent data changes
     setNewPin(parent?.pin || "");
   }, [parent]);
 
   useEffect(() => {
     const fetchDailyTasks = async () => {
+      // if there is no child profile yet, there are no tasks to load
       if (!child?.id) {
         setDailyTasks([]);
         setLoadingTasks(false);
@@ -90,6 +108,7 @@ const Settings = () => {
       try {
         setLoadingTasks(true);
 
+        // fetch only this child's daily recurring tasks
         const q = query(
           collection(db, "Task"),
           where("childID", "==", child.id),
@@ -103,10 +122,13 @@ const Settings = () => {
           ...docSnap.data(),
         }));
 
-        // Group tasks by seriesId (or fall back to description, then id) and keep only the latest instance of each
+        // daily tasks are recreated over time, so there may be many documents
+        // for the same recurring task. this keeps only the latest task from each series.
         const latestTasksMap = new Map();
 
         tasksList.forEach((task) => {
+          // seriesId groups repeated versions of the same daily task together
+          // description and id are fallbacks in case old tasks do not have a seriesId
           const key =
             task.seriesId || task.description?.trim()?.toLowerCase() || task.id;
           const existingTask = latestTasksMap.get(key);
@@ -114,6 +136,7 @@ const Settings = () => {
           const currentCreatedAt = task.createdAt?.toMillis?.() ?? 0;
           const existingCreatedAt = existingTask?.createdAt?.toMillis?.() ?? 0;
 
+          // keep the most recently created version of the task
           if (!existingTask || currentCreatedAt > existingCreatedAt) {
             latestTasksMap.set(key, task);
           }
@@ -134,6 +157,7 @@ const Settings = () => {
   }, [child?.id]);
 
   const refreshDailyTasks = async () => {
+    // reload daily tasks after adding, editing or deleting one
     if (!child?.id) return;
 
     try {
@@ -150,8 +174,7 @@ const Settings = () => {
         ...docSnap.data(),
       }));
 
-      // Group by seriesId, not description.
-      // This prevents edited descriptions from appearing as a "new" task.
+      // group repeated task documents by seriesId so only one version is shown in settings
       const latestTasksMap = new Map();
 
       tasksList.forEach((task) => {
@@ -178,6 +201,7 @@ const Settings = () => {
 
   const handleSaveName = async () => {
     try {
+      // update the child's display name in firestore
       await editChildName(child.id, newName);
       setNameModal(false);
     } catch (error) {
@@ -187,6 +211,7 @@ const Settings = () => {
   };
 
   const handleSavePin = async () => {
+    // parent pins must be exactly 4 digits
     if (!/^[0-9]{4}$/.test(newPin)) {
       setPinError("PIN must be exactly 4 digits.");
       return;
@@ -194,6 +219,8 @@ const Settings = () => {
 
     try {
       setPinError("");
+
+      // update the pin used for entering parent mode
       await editParentPin(parent.id, newPin);
       setPinModal(false);
     } catch (error) {
@@ -203,6 +230,7 @@ const Settings = () => {
   };
 
   const handleSignOut = () => {
+    // confirmation alert prevents the parent signing out by accident
     Alert.alert("Confirm Sign Out", "Are you sure you want to log out?", [
       {
         text: "Cancel",
@@ -217,6 +245,7 @@ const Settings = () => {
   };
 
   const resetTaskForm = () => {
+    // clears the task form so old values do not remain when opening a modal again
     setSelectedTask(null);
     setTaskDescription("");
     setTaskCategory(null);
@@ -225,6 +254,7 @@ const Settings = () => {
   };
 
   const openEditTaskModal = (task) => {
+    // pre-fill the edit modal with the selected task's current values
     setSelectedTask(task);
     setTaskDescription(task?.description || "");
     setTaskCategory(task?.category || null);
@@ -234,6 +264,7 @@ const Settings = () => {
   };
 
   const handleAddTask = async () => {
+    // basic validation before creating a new daily task
     if (!taskDescription.trim()) {
       Alert.alert("Missing description", "Please enter a task description.");
       return;
@@ -255,14 +286,19 @@ const Settings = () => {
     }
 
     try {
+      // create a new daily task with its own document id
       const newTaskRef = doc(collection(db, "Task"));
+
       await setDoc(newTaskRef, {
         description: taskDescription.trim(),
         category: taskCategory,
         coins: Number(taskCoins),
         childID: child.id,
         recurrence: "daily",
+
+        // this starts a new recurring series for the task
         seriesId: newTaskRef.id,
+
         status: "notdone",
         approvalNeeded: taskApprovalNeeded,
         approvedBy: null,
@@ -274,6 +310,8 @@ const Settings = () => {
 
       setAddTaskModal(false);
       resetTaskForm();
+
+      // reload the list so the new task appears straight away
       await refreshDailyTasks();
     } catch (error) {
       console.error("Error adding daily task:", error);
@@ -282,8 +320,10 @@ const Settings = () => {
   };
 
   const handleUpdateTask = async () => {
+    // do nothing if no task has been selected
     if (!selectedTask?.id) return;
 
+    // validate the edited task values
     if (!taskDescription.trim()) {
       Alert.alert("Missing description", "Please enter a task description.");
       return;
@@ -307,6 +347,7 @@ const Settings = () => {
         approvalNeeded: taskApprovalNeeded,
       };
 
+      // use the seriesId so all repeated versions of the same daily task are updated
       const seriesId = selectedTask.seriesId || selectedTask.id;
 
       const q = query(
@@ -318,6 +359,7 @@ const Settings = () => {
 
       const snapshot = await getDocs(q);
 
+      // update every document in that recurring series, not just the latest one
       const updatePromises = snapshot.docs.map((docSnap) =>
         updateDoc(doc(db, "Task", docSnap.id), updateData),
       );
@@ -326,6 +368,8 @@ const Settings = () => {
 
       setEditTaskModal(false);
       resetTaskForm();
+
+      // reload the displayed daily tasks after editing
       await refreshDailyTasks();
     } catch (error) {
       console.error("Error updating task:", error);
@@ -334,6 +378,7 @@ const Settings = () => {
   };
 
   const handleDeleteTask = (task) => {
+    // keep at least 3 daily tasks so the child always has a minimum daily routine
     if (dailyTasks.length <= 3) {
       Alert.alert("Cannot Delete", "You must maintain at least 3 daily tasks.");
       return;
@@ -352,6 +397,7 @@ const Settings = () => {
           style: "destructive",
           onPress: async () => {
             try {
+              // delete all documents in the same recurring series
               const seriesId = task.seriesId || task.id;
 
               const q = query(
@@ -369,6 +415,7 @@ const Settings = () => {
 
               await Promise.all(deletePromises);
 
+              // reload the list after deleting
               await refreshDailyTasks();
             } catch (error) {
               console.error("Error deleting task:", error);
@@ -383,7 +430,7 @@ const Settings = () => {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       <View className="flex-1">
-        {/* Swap back to child mode when the parent is done in settings. */}
+        {/* switch back to child mode when the parent is finished */}
         <Pressable
           onPress={() => setMode("child")}
           style={{
@@ -412,7 +459,7 @@ const Settings = () => {
             Settings
           </Text>
 
-          {/* CHILD NAME */}
+          {/* child name section */}
           <View className="bg-[#ECEBFF] p-4 rounded-2xl mb-5">
             <Text className="text-[#150F59] text-lg font-bold mb-3">
               Child Name
@@ -425,6 +472,7 @@ const Settings = () => {
                 </Text>
               </View>
 
+              {/* opens the child name edit modal */}
               <Pressable
                 onPress={() => setNameModal(true)}
                 className="ml-3 w-10 h-10 rounded-full bg-[#4F46E5] items-center justify-center"
@@ -434,8 +482,7 @@ const Settings = () => {
             </View>
           </View>
 
-          {/* PARENT PIN */}
-          {/* Show and edit the secure parent PIN used for switching modes. */}
+          {/* parent pin section */}
           <View className="bg-[#ECEBFF] p-4 rounded-2xl mb-5">
             <Text className="text-[#150F59] text-lg font-bold mb-3">
               Parent PIN
@@ -447,6 +494,7 @@ const Settings = () => {
                   {showPin ? parent?.pin : "****"}
                 </Text>
 
+                {/* toggles between showing and hiding the pin */}
                 <Pressable onPress={() => setShowPin(!showPin)}>
                   <Ionicons
                     name={showPin ? "eye-off" : "eye"}
@@ -456,6 +504,7 @@ const Settings = () => {
                 </Pressable>
               </View>
 
+              {/* opens the pin edit modal */}
               <Pressable
                 onPress={() => setPinModal(true)}
                 className="ml-3 w-10 h-10 rounded-full bg-[#4F46E5] items-center justify-center"
@@ -465,8 +514,7 @@ const Settings = () => {
             </View>
           </View>
 
-          {/* DAILY TASK MANAGEMENT */}
-          {/* Manage recurring daily tasks and edit/delete existing daily tasks. */}
+          {/* daily task management section */}
           <View className="bg-[#ECEBFF] p-4 rounded-2xl mb-5">
             <Text className="text-[#150F59] text-lg font-bold mb-3">
               Daily Tasks
@@ -499,6 +547,7 @@ const Settings = () => {
                     </View>
 
                     <View className="flex-row">
+                      {/* edit this daily task series */}
                       <Pressable
                         onPress={() => openEditTaskModal(task)}
                         className="w-9 h-9 rounded-full bg-[#4F46E5] items-center justify-center mr-2"
@@ -510,6 +559,7 @@ const Settings = () => {
                         />
                       </Pressable>
 
+                      {/* delete this daily task series */}
                       <Pressable
                         onPress={() => handleDeleteTask(task)}
                         className="w-9 h-9 rounded-full bg-[#e54646] items-center justify-center"
@@ -526,6 +576,7 @@ const Settings = () => {
               ))
             )}
 
+            {/* opens the add daily task modal */}
             <Pressable
               onPress={() => {
                 resetTaskForm();
@@ -540,8 +591,7 @@ const Settings = () => {
             </Pressable>
           </View>
 
-          {/* LOGOUT */}
-          {/* Sign out of the parent account when finished managing settings. */}
+          {/* logout section */}
           <View className="mt-4 pb-6">
             <Pressable
               onPress={handleSignOut}
@@ -553,7 +603,7 @@ const Settings = () => {
         </ScrollView>
       </View>
 
-      {/* EDIT NAME MODAL */}
+      {/* edit child name modal */}
       <Modal visible={nameModal} transparent animationType="fade">
         <View className="flex-1 bg-black/40 justify-center items-center px-6">
           <View className="bg-white w-full rounded-2xl p-5">
@@ -586,7 +636,7 @@ const Settings = () => {
         </View>
       </Modal>
 
-      {/* EDIT PIN MODAL */}
+      {/* edit parent pin modal */}
       <Modal visible={pinModal} transparent animationType="fade">
         <View className="flex-1 bg-black/40 justify-center items-center px-6">
           <View className="bg-white w-full rounded-2xl p-5">
@@ -605,6 +655,8 @@ const Settings = () => {
               maxLength={4}
               className="border border-gray-200 rounded-lg p-3 mb-4 text-lg"
             />
+
+            {/* show validation error if the pin is not exactly 4 digits */}
             {pinError ? (
               <Text className="text-red mb-3">{pinError}</Text>
             ) : null}
@@ -631,7 +683,7 @@ const Settings = () => {
         </View>
       </Modal>
 
-      {/* ADD TASK MODAL */}
+      {/* add daily task modal */}
       <Modal visible={addTaskModal} transparent animationType="fade">
         <View className="flex-1 bg-black/40 justify-center items-center px-6">
           <View className="bg-white w-full rounded-2xl p-4 shadow-md max-h-[90%]">
@@ -640,7 +692,7 @@ const Settings = () => {
                 Add Daily Task
               </Text>
 
-              {/* Description */}
+              {/* task description input */}
               <Text className="text-gray-700 text-sm font-semibold mb-2">
                 Description
               </Text>
@@ -653,7 +705,7 @@ const Settings = () => {
                 className="border border-gray-200 rounded-lg p-3 mb-4 text-lg"
               />
 
-              {/* Category */}
+              {/* category dropdown */}
               <Text className="text-gray-700 text-sm font-semibold mb-2">
                 Category
               </Text>
@@ -678,7 +730,7 @@ const Settings = () => {
                 inputSearchStyle={{ color: "#111827", fontSize: 16 }}
               />
 
-              {/* Coins */}
+              {/* coin reward dropdown */}
               <Text className="text-gray-700 text-sm font-semibold mb-2">
                 Coins Reward
               </Text>
@@ -703,7 +755,7 @@ const Settings = () => {
                 inputSearchStyle={{ color: "#111827", fontSize: 16 }}
               />
 
-              {/* Approval Needed */}
+              {/* parent approval toggle */}
               <View className="flex-row justify-between items-center mb-4">
                 <Text className="text-gray-700 text-lg">
                   Requires Parent Approval
@@ -715,7 +767,7 @@ const Settings = () => {
                 />
               </View>
 
-              {/* Buttons */}
+              {/* add task buttons */}
               <View className="flex-row justify-end gap-3">
                 <Pressable
                   onPress={() => {
@@ -739,7 +791,7 @@ const Settings = () => {
         </View>
       </Modal>
 
-      {/* EDIT TASK MODAL */}
+      {/* edit daily task modal */}
       <Modal visible={editTaskModal} transparent animationType="fade">
         <View className="flex-1 bg-black/40 justify-center items-center px-6">
           <View className="bg-white w-full rounded-2xl p-4 shadow-md max-h-[90%]">
@@ -748,7 +800,7 @@ const Settings = () => {
                 Edit Daily Task
               </Text>
 
-              {/* Description */}
+              {/* task description input */}
               <Text className="text-gray-700 text-sm font-semibold mb-2">
                 Description
               </Text>
@@ -761,7 +813,7 @@ const Settings = () => {
                 className="border border-gray-200 rounded-lg p-3 mb-4 text-lg"
               />
 
-              {/* Category */}
+              {/* category dropdown */}
               <Text className="text-gray-700 text-sm font-semibold mb-2">
                 Category
               </Text>
@@ -786,7 +838,7 @@ const Settings = () => {
                 inputSearchStyle={{ color: "#111827", fontSize: 16 }}
               />
 
-              {/* Coins */}
+              {/* coin reward dropdown */}
               <Text className="text-gray-700 text-sm font-semibold mb-2">
                 Coins Reward
               </Text>
@@ -811,7 +863,7 @@ const Settings = () => {
                 inputSearchStyle={{ color: "#111827", fontSize: 16 }}
               />
 
-              {/* Approval Needed */}
+              {/* parent approval toggle */}
               <View className="flex-row justify-between items-center mb-4">
                 <Text className="text-gray-700 text-lg">
                   Requires Parent Approval
@@ -823,7 +875,7 @@ const Settings = () => {
                 />
               </View>
 
-              {/* Buttons */}
+              {/* edit task buttons */}
               <View className="flex-row justify-end gap-3">
                 <Pressable
                   onPress={() => {
